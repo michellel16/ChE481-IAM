@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/miche/PycharmProjects//**)",
+      "Read(//c/Users/miche/PycharmProjects/PythonProject3//**)",
+      "Bash(pip install *)",
+      "Bash(python *)",
+      "Bash(pip --version)",
+      "Bash(/c/Users/miche/PycharmProjects/ChE481-IAM/.venv/Scripts/pip install *)",
+      "Bash(uv add *)",
+      "Bash(PYTHONUTF8=1 python main.py)"
+    ]
+  }
+}

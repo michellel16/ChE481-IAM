@@ -1,0 +1,136 @@
+{
+  "regions": [
+    "USA", "EU", "Japan", "Russia", "Eurasia",
+    "China", "India", "Mid. East", "Africa", "Lat. Am.",
+    "Other Asia", "Other OECD"
+  ],
+
+  "initial_conditions": {
+    "_comment": "2015 baseline values. GDP in trillion 2015 USD (PPP). Pop in billions. sigma in GtCO2/trillion USD.",
+    "gdp_2015":            [17.9, 19.5,  4.8,  3.4,  2.1, 19.5,  8.0,  4.6,  4.7,  8.4,  8.5,  3.0],
+    "pop_2015":            [0.320, 0.510, 0.127, 0.143, 0.150, 1.370, 1.310, 0.410, 1.190, 0.630, 1.100, 0.200],
+    "capital_to_gdp_ratio": 3.0,
+    "sigma_2015":          [0.294, 0.178, 0.258, 0.482, 0.381, 0.546, 0.284, 0.407, 0.277, 0.213, 0.335, 0.307],
+    "savings_rate":        [0.22,  0.21,  0.23,  0.25,  0.26,  0.43,  0.30,  0.27,  0.20,  0.19,  0.30,  0.22]
+  },
+
+  "economy": {
+    "_comment": "Neoclassical Cobb-Douglas production. TFP growth halves every 50 yrs (convergence).",
+    "capital_elasticity":   0.3,
+    "depreciation_rate":    0.10,
+    "tfp_growth_0":        [0.010, 0.010, 0.008, 0.015, 0.018, 0.025, 0.030, 0.025, 0.035, 0.020, 0.028, 0.012],
+    "tfp_halving_years":    50.0,
+    "sigma_decline_0":     [0.018, 0.020, 0.020, 0.012, 0.013, 0.015, 0.014, 0.012, 0.013, 0.016, 0.014, 0.018]
+  },
+
+  "emissions": {
+    "_comment": "Land-use change emissions (GtCO2/yr, global total). Linearly declines 2015→2100.",
+    "land_use_2015_gtco2": 4.0,
+    "land_use_2100_gtco2": 1.0
+  },
+
+  "carbon_cycle": {
+    "_comment": "3-box DICE model. Reservoir stocks in GtC. b12/b23 are annual transfer fractions (DICE 5-yr values /5).",
+    "m_at_preindustrial":  588.0,
+    "m_up_preindustrial": 1350.0,
+    "m_lo_preindustrial": 10000.0,
+    "m_at_2015":           851.0,
+    "m_up_2015":           460.0,
+    "m_lo_2015":          1740.0,
+    "b12":                   0.024,
+    "b23":                   0.0014,
+    "preindustrial_co2_ppm": 278.0
+  },
+
+  "climate": {
+    "_comment": "2-box energy-balance model. eta=F2xCO2 forcing (W/m2). ECS=equilibrium climate sensitivity (C at 2xCO2).",
+    "ecs":         3.1,
+    "eta":         3.6813,
+    "c1":          0.0201,
+    "c3":          0.0176,
+    "c4":          0.0050,
+    "t_at_2015":   0.85,
+    "t_lo_2015":   0.07,
+    "f_ex_2015":   0.50,
+    "f_ex_2100":   1.00
+  },
+
+  "damage": {
+    "_comment": "Climate damage as fraction of gross output. damage_type: 'quadratic'|'linear'|'threshold'.",
+    "damage_type":       "quadratic",
+    "psi1":              0.0,
+    "psi2":              0.00267,
+    "threshold_temp":    3.0,
+    "threshold_damage":  0.05
+  },
+
+  "abatement": {
+    "_comment": "Marginal abatement cost curve: Lambda = theta1(t)*mu^theta2. theta1 declines with technology learning.",
+    "theta1_0":     0.035,
+    "theta2":       2.8,
+    "theta1_decay": 0.005
+  },
+
+  "ensemble": {
+    "_comment": "Climate model ensemble: each member draws a different ECS from a log-normal distribution matching IPCC AR6. size=1 gives a single deterministic run.",
+    "size":          20,
+    "ecs_median":    3.0,
+    "ecs_sigma_log": 0.25,
+    "ecs_min":       1.5,
+    "ecs_max":       6.0,
+    "seed":          42
+  },
+
+  "ssp_configs": {
+    "SSP1": {
+      "name":  "SSP1 \u2013 Sustainability",
+      "color": "#1b7837",
+      "pop_max":      [0.36, 0.47, 0.10, 0.12, 0.17, 1.20, 1.50, 0.65, 1.80, 0.72, 1.20, 0.21],
+      "pop_speed":    0.040,
+      "tfp_mult":     1.10,
+      "sigma_mult":   2.50,
+      "mu_start": 0.30, "mu_start_year": 2025,
+      "mu_end":   0.95, "mu_end_year":   2060
+    },
+    "SSP2": {
+      "name":  "SSP2 \u2013 Middle of the Road",
+      "color": "#4393c3",
+      "pop_max":      [0.39, 0.49, 0.10, 0.13, 0.19, 1.30, 1.75, 0.78, 2.50, 0.79, 1.40, 0.22],
+      "pop_speed":    0.025,
+      "tfp_mult":     1.00,
+      "sigma_mult":   1.00,
+      "mu_start": 0.10, "mu_start_year": 2030,
+      "mu_end":   0.65, "mu_end_year":   2100
+    },
+    "SSP3": {
+      "name":  "SSP3 \u2013 Regional Rivalry",
+      "color": "#d6604d",
+      "pop_max":      [0.41, 0.50, 0.11, 0.14, 0.22, 1.45, 2.00, 0.95, 3.20, 0.90, 1.70, 0.23],
+      "pop_speed":    0.020,
+      "tfp_mult":     0.80,
+      "sigma_mult":   0.50,
+      "mu_start": 0.05, "mu_start_year": 2040,
+      "mu_end":   0.25, "mu_end_year":   2100
+    },
+    "SSP4": {
+      "name":  "SSP4 \u2013 Inequality",
+      "color": "#f4a582",
+      "pop_max":      [0.38, 0.47, 0.10, 0.12, 0.18, 1.28, 1.70, 0.80, 2.80, 0.77, 1.50, 0.21],
+      "pop_speed":    0.028,
+      "tfp_mult":     0.95,
+      "sigma_mult":   0.80,
+      "mu_start": 0.08, "mu_start_year": 2030,
+      "mu_end":   0.45, "mu_end_year":   2100
+    },
+    "SSP5": {
+      "name":  "SSP5 \u2013 Fossil-Fueled Development",
+      "color": "#762a83",
+      "pop_max":      [0.38, 0.47, 0.10, 0.12, 0.18, 1.22, 1.50, 0.70, 1.90, 0.73, 1.25, 0.21],
+      "pop_speed":    0.035,
+      "tfp_mult":     1.20,
+      "sigma_mult":   0.30,
+      "mu_start": 0.02, "mu_start_year": 2050,
+      "mu_end":   0.10, "mu_end_year":   2100
+    }
+  }
+}
