@@ -36,9 +36,13 @@ class EconomyModule:
     n_years  : number of simulation timesteps
     """
 
-    def __init__(self, params: dict, ssp_cfg: dict, n_years: int):
+    def __init__(self, params: dict, ssp_cfg: dict, n_years: int,
+                 economy_type: str = "market"):
         ic = params["initial_conditions"]
         ep = params["economy"]
+
+        self.economy_type  = economy_type
+        self.rho_ramsey   = 0.015   # pure rate of time preference for Ramsey rule
 
         # Production parameters
         self.gamma       = ep["capital_elasticity"]      # capital share (gamma ~ 0.3)
@@ -131,8 +135,18 @@ class EconomyModule:
                              * (1.0 - damage_frac)
                              * (1.0 - abate_frac))
 
+        # Savings rate: fixed (market) or Ramsey-optimal (social planner)
+        if self.economy_type == "optimal":
+            # Ramsey rule: savings rate converges from market rates toward s_golden
+            # s_golden = γδ/(δ+ρ) — golden-rule savings under time preference ρ
+            s_golden = self.gamma * self.delta_k / (self.delta_k + self.rho_ramsey)
+            alpha = np.exp(-float(t) / 40.0)   # 40-year convergence half-life
+            savings = s_golden + (self.savings_rate - s_golden) * alpha
+        else:
+            savings = self.savings_rate
+
         # Consumption = non-saved share of net output
-        self.consumption[:, t] = (1.0 - self.savings_rate) * self.y_net[:, t]
+        self.consumption[:, t] = (1.0 - savings) * self.y_net[:, t]
 
         # GDP per capita (trillion USD / billion = thousand USD/person)
         self.gdp_per_capita[:, t] = self.y_net[:, t] / self.pop[:, t]
@@ -140,4 +154,4 @@ class EconomyModule:
         # Capital accumulation: K(t+1) = (1-delta)*K(t) + s*Y_net(t)
         if t < self.n_years - 1:
             self.K[:, t+1] = ((1.0 - self.delta_k) * self.K[:, t]
-                               + self.savings_rate * self.y_net[:, t])
+                               + savings * self.y_net[:, t])

@@ -1,0 +1,160 @@
+/* ── reset & base ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;          /* page never scrolls — only panes do */
+    background: #0f1623;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ── scrollbars ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3a52; border-radius: 3px; }
+
+/* ── sidebar resize handle ───────────────────────────────────────────────── */
+#sidebar-resizer {
+    width: 4px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    background: #1a2740;
+    transition: background 0.15s;
+    position: relative;
+    z-index: 10;
+}
+#sidebar-resizer:hover,
+#sidebar-resizer.resizing {
+    background: #2a9d8f;
+}
+
+/* ── sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar-label {
+    color: #5a7a98;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 13px;
+    margin-bottom: 4px;
+}
+
+.section-divider {
+    border: none;
+    border-top: 1px solid #1a2740;
+    margin: 12px 0 4px;
+}
+
+/* Slider container — clips horizontal overflow from handles/tooltips */
+.slider-wrap {
+    padding: 0 8px;
+    overflow: hidden;
+}
+
+/* ── info boxes ──────────────────────────────────────────────────────────── */
+.info-box {
+    background: #141c2e;
+    border-left: 2px solid #243448;
+    border-radius: 0 4px 4px 0;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: #5a7a98;
+    line-height: 1.55;
+    margin-top: 4px;
+}
+
+/* ── stat cards ──────────────────────────────────────────────────────────── */
+.stats-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: #161d2e;
+    border-radius: 6px;
+    padding: 10px 12px;
+    flex: 1 1 130px;           /* grow/shrink freely, min 130px before wrapping */
+    min-width: 0;              /* let flex shrink below content width */
+}
+
+.stat-card .stat-title {
+    color: #4a6688;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-card .stat-value {
+    color: #eaf0f8;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 3px 0 1px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-card .stat-sub {
+    color: #344e66;
+    font-size: 10.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── run button ──────────────────────────────────────────────────────────── */
+.run-btn {
+    width: 100%;
+    padding: 10px;
+    background: #2a9d8f;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.run-btn:hover {
+    background: #34b8a8;
+    box-shadow: 0 0 0 3px rgba(42,157,143,0.25);
+}
+
+/* ── reset-mu button ─────────────────────────────────────────────────────── */
+.reset-btn {
+    margin-top: 8px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid #243448;
+    color: #4a6a88;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.reset-btn:hover {
+    background: #1e3a52 !important;
+    color: #7aaabf !important;
+}
+
+/* ── Dash tab bar overrides ───────────────────────────────────────────────── */
+.tab-bar-wrap .react-tabs__tab-list {
+    margin: 0;
+    border-bottom: 1px solid #1e2d42;
+}
+
+/* ── dropdown z-index (Dash menus sometimes clipped by overflow:hidden) ──── */
+.Select-menu-outer,
+.VirtualizedSelectOption {
+    z-index: 1000 !important;
+}

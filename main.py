@@ -14,7 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_ROOT, "backend"))
 from iam_model import run_iam, SSP_CONFIGS, REGIONS, N_REGIONS
 
 # ─── output directory (same folder as this script) ────────────────────────────

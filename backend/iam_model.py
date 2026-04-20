@@ -53,7 +53,11 @@ def run_iam(ssp_key: str = "SSP2",
             params_path: str = DEFAULT_PARAMS_PATH,
             damage_type: str = None,
             ensemble_size: int = None,
-            ensemble_seed: int = None) -> dict:
+            ensemble_seed: int = None,
+            mu_start_override: float = None,
+            mu_end_override: float = None,
+            welfare_type: str = "utilitarian",
+            economy_type: str = "market") -> dict:
     """
     Run the simplified RICE/DICE IAM for one SSP scenario.
 
@@ -98,7 +102,7 @@ def run_iam(ssp_key: str = "SSP2",
     n_reg   = len(params["regions"])
 
     # ── initialise modules ────────────────────────────────────────────────────
-    econ  = EconomyModule(params, ssp_cfg, n_t)
+    econ  = EconomyModule(params, ssp_cfg, n_t, economy_type=economy_type)
     emiss = EmissionsModule(params, n_reg, n_t)
     carb  = CarbonCycleModule(params, n_t)
     clim  = ClimateModule(params, n_t,
@@ -111,8 +115,10 @@ def run_iam(ssp_key: str = "SSP2",
     # Linear ramp from mu_start (at mu_start_year) to mu_end (at mu_end_year);
     # applied uniformly across regions (can be made region-specific if needed).
     mu = np.zeros((n_reg, n_t))
-    mu_s, yr_s = ssp_cfg["mu_start"],    ssp_cfg["mu_start_year"]
-    mu_e, yr_e = ssp_cfg["mu_end"],      ssp_cfg["mu_end_year"]
+    mu_s = mu_start_override if mu_start_override is not None else ssp_cfg["mu_start"]
+    mu_e = mu_end_override   if mu_end_override   is not None else ssp_cfg["mu_end"]
+    yr_s = ssp_cfg["mu_start_year"]
+    yr_e = ssp_cfg["mu_end_year"]
     ramp_len   = max(yr_s - start_year, 1)
     for ti, yr in enumerate(years):
         if yr < yr_s:
@@ -145,15 +151,30 @@ def run_iam(ssp_key: str = "SSP2",
         t_at, forcing = clim.step(ti, m_at, elapsed)
 
         # 5. Damage — output loss fraction from temperature
-        dmg_frac = dmg.compute(t_at)
+        omega = dmg.compute(t_at)
+
+        # Welfare-based regional damage distribution
+        if welfare_type == "utilitarian" or ti == 0:
+            dmg_frac_r = np.full(n_reg, omega)
+        else:
+            gdppc_prev = np.maximum(econ.gdp_per_capita[:, ti - 1], 1e-6)
+            pop_prev   = np.maximum(econ.pop[:, ti - 1], 1e-6)
+            gdppc_mean = (gdppc_prev * pop_prev).sum() / pop_prev.sum()
+            # Equity multiplier: poorer regions bear proportionally more damage
+            multiplier = np.clip((gdppc_mean / gdppc_prev) ** 0.5, 0.4, 3.0)
+            if welfare_type == "egalitarian":
+                dmg_frac_r = np.clip(omega * multiplier, 0.0, 0.99)
+            else:  # rawlsian — social planner focuses on worst-off region
+                worst = float(np.clip(omega * multiplier.max(), 0.0, 0.99))
+                dmg_frac_r = np.full(n_reg, worst)
 
         # 6. Abatement — cost fraction of gross output
         abate_frac = abate.compute(mu[:, ti], elapsed)
 
         # 7. Economy — net output, consumption, capital for next period
-        econ.step_capital(ti, dmg_frac, abate_frac)
+        econ.step_capital(ti, dmg_frac_r, abate_frac)
 
-        # 8. Diagnostics
+        # 8. Diagnostics — SCC uses effective mean damage fraction
         scc_arr[ti]    = dmg.social_cost_of_carbon(t_at, float(y_gross.sum()))
         mac_arr[:, ti] = abate.marginal_abatement_cost(mu[:, ti], sigma, elapsed)
 

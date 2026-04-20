@@ -6,4 +6,6 @@ requires-python = ">=3.14"
 dependencies = [
     "numpy>=1.26",
     "matplotlib>=3.8",
+    "dash>=2.18",
+    "plotly>=5.22",
 ]
