@@ -20,44 +20,35 @@ Units
     Population       : billions
     Capital stock    : trillion 2015 USD
     GDP per capita   : thousand USD / person / year  (= trillion/billion)
+
+FIX THIS
 """
 
 import numpy as np
 
 
 class EconomyModule:
-    """
-    Regional neoclassical economy following the DICE/RICE50+ framework.
-
-    Parameters
-    ----------
-    params   : full parameter dict loaded from params.json
-    ssp_cfg  : SSP-specific sub-dict (pop_max, pop_speed, tfp_mult, sigma_mult)
-    n_years  : number of simulation timesteps
-    """
-
     def __init__(self, params: dict, ssp_cfg: dict, n_years: int,
                  economy_type: str = "market"):
         ic = params["initial_conditions"]
         ep = params["economy"]
 
-        self.economy_type  = economy_type
-        self.rho_ramsey   = 0.015   # pure rate of time preference for Ramsey rule
+        self.economy_type = economy_type
+        self.rho_ramsey = 0.015 # Pure rate of time preference for Ramsey rule
 
-        # Production parameters
-        self.gamma       = ep["capital_elasticity"]      # capital share (gamma ~ 0.3)
-        self.delta_k     = ep["depreciation_rate"]       # annual depreciation rate
-        self.tfp_growth_0 = np.array(ep["tfp_growth_0"]) # baseline TFP growth rates
-        self.tfp_halving  = ep["tfp_halving_years"]      # growth halves every N years
-        self.sigma_dec_0  = np.array(ep["sigma_decline_0"])  # autonomous decarbonisation
+        self.gamma = ep["capital_elasticity"] # Capital share (gamma ~ 0.3)
+        self.delta_k = ep["depreciation_rate"] # Annual depreciation rate
+        self.tfp_growth_0 = np.array(ep["tfp_growth_0"]) # Baseline TFP growth rates
+        self.tfp_halving = ep["tfp_halving_years"] # Growth halves every N years
+        self.sigma_dec_0 = np.array(ep["sigma_decline_0"]) # autonomous decarbonisation
 
-        # SSP-specific multipliers
-        self.pop_max   = np.array(ssp_cfg["pop_max"])   # logistic ceiling (billions)
-        self.pop_speed = ssp_cfg["pop_speed"]            # convergence speed
-        self.tfp_mult  = ssp_cfg["tfp_mult"]             # scales TFP growth
-        self.sig_mult  = ssp_cfg["sigma_mult"]           # scales sigma decline
+        # SSP-specific
+        self.pop_max = np.array(ssp_cfg["pop_max"]) # Ceiling for population growh
+        self.pop_speed = ssp_cfg["pop_speed"] # Convergence speed
+        self.tfp_mult = ssp_cfg["tfp_mult"] # scales TFP growth
+        self.sig_mult = ssp_cfg["sigma_mult"] # scales sigma decline
 
-        # Initial conditions
+        # Initial Conditions
         gdp_0 = np.array(ic["gdp_2015"])
         pop_0 = np.array(ic["pop_2015"])
         self.savings_rate = np.array(ic["savings_rate"])
@@ -66,40 +57,36 @@ class EconomyModule:
         self.n_regions = n
         self.n_years   = n_years
 
-        # State arrays — shape (n_regions, n_years)
-        self.pop            = np.zeros((n, n_years))
-        self.K              = np.zeros((n, n_years))
-        self.tfp            = np.zeros((n, n_years))
-        self.sigma          = np.zeros((n, n_years))   # carbon intensity
-        self.y_gross        = np.zeros((n, n_years))
-        self.y_net          = np.zeros((n, n_years))
-        self.consumption    = np.zeros((n, n_years))
-        self.gdp_per_capita = np.zeros((n, n_years))   # thousand USD/person
+        self.pop  = np.zeros((n, n_years))
+        self.K = np.zeros((n, n_years))
+        self.tfp = np.zeros((n, n_years))
+        self.sigma = np.zeros((n, n_years)) # Carbon intensity
+        self.y_gross = np.zeros((n, n_years))
+        self.y_net = np.zeros((n, n_years))
+        self.consumption = np.zeros((n, n_years))
+        self.gdp_per_capita = np.zeros((n, n_years)) # Thousand USD/person
 
-        # Initialise t=0
-        self.pop[:, 0]   = pop_0
-        self.K[:, 0]     = gdp_0 * ic["capital_to_gdp_ratio"]
+        self.pop[:, 0] = pop_0
+        self.K[:, 0] = gdp_0 * ic["capital_to_gdp_ratio"]
         self.sigma[:, 0] = np.array(ic["sigma_2015"])
-        # Back-calculate TFP: A = Y / (K^gamma * L^(1-gamma))
         self.tfp[:, 0] = gdp_0 / (self.K[:, 0] ** self.gamma
                                     * pop_0 ** (1.0 - self.gamma))
 
-    # ------------------------------------------------------------------
+    """
+    Advance population, TFP, carbon intensity, and gross output for timestep t.
+    Call this before damage and abatement are known.
+
+    Parameters
+    ----------
+    t       : timestep index (0-based)
+    elapsed : years since simulation start
+
+    Returns
+    -------
+    y_gross : (n_regions,) gross economic output [trillion USD/yr]
+    sigma   : (n_regions,) carbon intensity [GtCO2/trillion USD]
+    """
     def step_production(self, t: int, elapsed: float):
-        """
-        Advance population, TFP, carbon intensity, and gross output for timestep t.
-        Call this before damage and abatement are known.
-
-        Parameters
-        ----------
-        t       : timestep index (0-based)
-        elapsed : years since simulation start
-
-        Returns
-        -------
-        y_gross : (n_regions,) gross economic output [trillion USD/yr]
-        sigma   : (n_regions,) carbon intensity [GtCO2/trillion USD]
-        """
         if t > 0:
             # Population — logistic growth toward SSP-specific ceiling
             self.pop[:, t] = (self.pop[:, t-1]
@@ -125,15 +112,17 @@ class EconomyModule:
         Compute net output, consumption, per-capita income, and accumulate capital.
         Call after damage_frac and abate_frac are available for this timestep.
 
-        Parameters
-        ----------
-        t           : timestep index
+        t : timestep index
         damage_frac : scalar fraction of output lost to climate damage
         abate_frac  : (n_regions,) fraction of output spent on abatement
         """
-        self.y_net[:, t] = (self.y_gross[:, t]
-                             * (1.0 - damage_frac)
-                             * (1.0 - abate_frac))
+        # DICE Eq 4: Y = YNET - ABATECOST = YGROSS*(1-Ω) - YGROSS*Λ
+        # (additive, not multiplicative — avoids spurious cross-term Ω·Λ)
+        self.y_net[:, t] = np.maximum(
+            self.y_gross[:, t] * (1.0 - damage_frac)
+            - self.y_gross[:, t] * abate_frac,
+            0.0,
+        )
 
         # Savings rate: fixed (market) or Ramsey-optimal (social planner)
         if self.economy_type == "optimal":

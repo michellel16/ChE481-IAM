@@ -25,7 +25,13 @@
       "Bash(git add *)",
       "Bash(git rm *)",
       "Bash(rm -rf assets/)",
-      "Bash(.venv/Scripts/python.exe -c \"import ast, pathlib; ast.parse\\(pathlib.Path\\('frontend/app.py'\\).read_text\\(\\)\\); print\\('OK'\\)\")"
+      "Bash(.venv/Scripts/python.exe -c \"import ast, pathlib; ast.parse\\(pathlib.Path\\('frontend/app.py'\\).read_text\\(\\)\\); print\\('OK'\\)\")",
+      "WebFetch(domain:yale.app.box.com)",
+      "Bash(python3.14 *)",
+      "Bash(where python *)",
+      "Bash(C:/Users/miche/PycharmProjects/ChE481-IAM/.venv/Scripts/python.exe *)",
+      "Bash(C:/Users/miche/PycharmProjects/ChE481-IAM/.venv/Scripts/pip.exe install *)",
+      "Bash(C:/Users/miche/AppData/Local/Programs/Python/Python314/python.exe *)"
     ]
   }
 }
