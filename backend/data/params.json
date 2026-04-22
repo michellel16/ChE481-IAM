@@ -1,11 +1,10 @@
 {
-  "regions": [ "USA", "EU", "Japan", "Russia", "Eurasia",
-    "China", "India", "Mid. East", "Africa", "Latin Am.",
-    "Other Asia", "Other OECD"
+  "regions": [ "USA", "EU", "Japan", "Russia", "Eurasia",  "China", "India", "Mid. East", "Africa",
+    "Latin Am.", "Other Asia", "Other OECD"
   ],
 
   "initial_conditions": {
-    "note": "2015 Baseline: GDP in trillion 2015 USD (PPP), Pop in billions, sigma in GtCO2/trillion USD",
+    "note": "2015 Baseline: GDP in trillion 2015 USD (PPP), Population in billions, sigma in GtCO2/trillion USD",
     "gdp_2015": [17.9, 19.5,  4.8,  3.4,  2.1, 19.5,  8.0,  4.6,  4.7,  8.4,  8.5,  3.0],
     "pop_2015": [0.320, 0.510, 0.127, 0.143, 0.150, 1.370, 1.310, 0.410, 1.190, 0.630, 1.100, 0.200],
     "capital_to_gdp_ratio": 3.0,
@@ -16,11 +15,11 @@
   "welfare": {
     "note": "Ramsey Welfare: elasmu = elasticity of marginal utility (alpha), prstp = pure rate of social time preference per year",
     "elasmu": 1.45,
-    "prstp":  0.015
+    "prstp": 0.015
   },
 
   "economy": {
-    "note": "Neoclassical Cobb-Douglas production -> TFP growth halves every 50 yrs",
+    "note": "Neoclassical Cobb-Douglas production where TFP growth halves every 50 yrs",
     "capital_elasticity": 0.3,
     "depreciation_rate": 0.10,
     "tfp_growth_0": [0.010, 0.010, 0.008, 0.015, 0.018, 0.025, 0.030, 0.025, 0.035, 0.020, 0.028, 0.012],
@@ -29,7 +28,7 @@
   },
 
   "emissions": {
-    "note": "Land-use change emissions (global GtCO2/yr, linearly declines",
+    "note": "Land-use change emissions (global GtCO2/yr), linearly declines",
     "land_use_2015_gtco2": 4.0,
     "land_use_2100_gtco2": 1.0
   },

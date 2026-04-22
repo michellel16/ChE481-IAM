@@ -1,24 +1,11 @@
 """
-Emissions module — converts economic output to CO2 emissions.
+Emissions module converts economic output to CO2 emissions where global emissions considers:
+- Emissions from energy & industrial CO2: E_EI(r,t) = sigma(r,t) * [1 - cr(r,t)] * Y_gross(r,t)
+sigma is carbon intensity (GtCO2/trillion USD), cr is emission control rate (fraction of unabated emissions avoided)
 
-Total regional emissions have two components:
+- Emissions from land-use change: E_LU(t) = global trajectory declining linearly over years before distributed evenly across regions.
 
-  1. Energy & industrial CO2 (endogenous):
-        E_EI(r,t) = sigma(r,t) * [1 - cr(r,t)] * Y_gross(r,t)
-
-     where sigma is carbon intensity [GtCO2/trillion USD] and cr is the
-     emission control rate (fraction of unabated emissions avoided).
-
-  2. Land-use change CO2 (exogenous):
-        E_LU(t) = global trajectory declining linearly 2015 -> 2100,
-                  then spread uniformly across regions.
-
-Global total:
-        E_global(t) = sum_r E_EI(r,t) + E_LU(t)
-
-Units: GtCO2 / year
-
-FIX THIS
+Global Total: E_global(t) = sum_r E_EI(r,t) + E_LU(t)
 """
 
 import numpy as np
@@ -31,9 +18,9 @@ class EmissionsModule:
         self.n_regions = n_regions
         self.n_years = n_years
 
-        self.emissions = np.zeros((n_regions, n_years)) # initial GtCO2/yr per region
-        self.emissions_ei = np.zeros((n_regions, n_years)) # initial emissions from energy + industry only
-        self.land_emissions = np.zeros(n_years) # initial global land-use GtCO2/yr
+        self.emissions = np.zeros((n_regions, n_years)) # Initial GtCO2/yr per region
+        self.emissions_ei = np.zeros((n_regions, n_years)) # Initial emissions from energy + industry
+        self.land_emissions = np.zeros(n_years) # Initial global land-use GtCO2/yr
 
     def step(self, t: int, elapsed: float, sim_length: float,
              y_gross: np.ndarray, sigma: np.ndarray, cr: np.ndarray):
@@ -45,7 +32,7 @@ class EmissionsModule:
         frac = min(elapsed / max(sim_length, 1.0), 1.0)
         self.land_emissions[t] = self.land_2015 + (self.land_2100 - self.land_2015) * frac
 
-        # Add land-use share to each region (uniform distribution)
+        # Add land-use share to each region (equal distribution)
         self.emissions[:, t] = (self.emissions_ei[:, t]
                                  + self.land_emissions[t] / self.n_regions)
 

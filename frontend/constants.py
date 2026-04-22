@@ -18,7 +18,7 @@ TAB_SEL = {**TAB_STYLE, "color": ACCENT,
 
 INPUT_STYLE = {
     "background": "#0a1220", "border": "1px solid #243448",
-    "color": "#b0c8e0", "borderRadius": "4px",
+    "color": "#b0c8e0", "borderRadius": "0",
     "padding": "3px 6px", "fontSize": "12px",
     "outline": "none", "textAlign": "center",
 }

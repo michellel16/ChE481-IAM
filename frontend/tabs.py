@@ -10,9 +10,9 @@ def placeholder():
     return html.Div(
         style={"display": "flex", "flexDirection": "column", "alignItems": "center",
                "justifyContent": "center", "height": "60vh",
-               "color": "#2a4058", "gap": "16px"},
+               "color": "#7a9ab8", "gap": "16px"},
         children=[
-            html.Div("◈", style={"fontSize": "40px", "color": "#1a3048"}),
+            html.Div("◈", style={"fontSize": "40px", "color": "#4a6a8a"}),
             html.Div("Configure settings in the sidebar, then click",
                      style={"fontSize": "14px"}),
             html.Div("▶  Run Simulation",
@@ -108,7 +108,7 @@ def tab_temperature(d, yrs):
 def tab_regional(d, yrs, sel):
     if not sel:
         return html.Div("Select regions in the sidebar to display breakdowns.",
-                        style={"color": "#3a5570", "padding": "60px",
+                        style={"color": "#7a9ab8", "padding": "60px",
                                "textAlign": "center", "fontSize": "14px"})
     fig = base_fig(height=420)
     for idx, ri in enumerate(sel):
@@ -150,16 +150,18 @@ def tab_economics(d, yrs, sel):
                         "Mean Marginal Abatement Cost (USD / tCO₂)"),
         vertical_spacing=0.18, horizontal_spacing=0.12,
     )
-    for (row, col), (series, color) in zip(
+    for (row, col), (series, color, name) in zip(
         [(1,1),(1,2),(2,1),(2,2)],
-        [(gdp_net, ACCENT), (gdp_gross, "#e9c46a"),
-         (d["scc"], "#e76f51"), (mac_mean, "#a8d8ea")],
+        [(gdp_net, ACCENT, "Net GDP"),
+         (gdp_gross, "#e9c46a", "Gross GDP"),
+         (d["scc"], "#e76f51", "SCC"),
+         (mac_mean, "#a8d8ea", "MAC")],
     ):
-        fig.add_trace(go.Scatter(x=yrs, y=series,
+        fig.add_trace(go.Scatter(x=yrs, y=series, name=name,
                                  line={"color": color}, showlegend=False), row=row, col=col)
     fig.update_layout(
         template="plotly_dark", paper_bgcolor=BG, plot_bgcolor=PLOT_BG,
-        font={"color": "#b0c8e0", "size": 12}, height=480, showlegend=False,
+        font={"color": "#b0c8e0", "size": 12, "family": "Cambria Math, Cambria, serif"}, height=480, showlegend=False,
         margin={"l": 55, "r": 25, "t": 55, "b": 50}, hovermode="x unified",
     )
     children = [dcc.Graph(figure=fig, config={"displayModeBar": False}, responsive=True)]
@@ -223,7 +225,7 @@ def tab_co2(d, yrs):
 def tab_about():
     cards = [
         html.Div(style={
-            "background": "#161d2e", "borderRadius": "8px",
+            "background": "#161d2e",
             "padding": "16px 20px", "marginBottom": "12px",
             "borderLeft": f"3px solid {ACCENT}",
         }, children=[

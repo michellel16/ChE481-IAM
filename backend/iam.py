@@ -88,7 +88,7 @@ def run_iam(ssp_key: str = "SSP2",  # Default IAM parameters
         reg_emiss, glob_emiss = emiss.step(ti, elapsed, sim_len, y_gross, sigma, cr[:, ti]) # Affects carbon cycle
         m_at, co2_ppm = carb.step(ti, glob_emiss) # Affects climate
         t_at, forcing = clim.step(ti, m_at, elapsed) # Affects damage
-        omega = dmg.compute(t_at) # Affects economy as fraction of gross output lost to climate damage (temp)
+        omega = dmg.calculate_damage_frac(t_at) # Affects economy as fraction of gross output lost to climate damage (temp)
 
         # Welfare-based regional damage distribution
         if welfare_type == "utilitarian" or ti == 0:
@@ -112,7 +112,7 @@ def run_iam(ssp_key: str = "SSP2",  # Default IAM parameters
         scc_arr[ti] = dmg.social_cost_of_carbon(t_at, float(y_gross.sum())) # Effective global damage fraction at current temp times global GDP
         mac_arr[:, ti] = abate.marginal_abatement_cost(cr[:, ti], sigma, elapsed, start_year) # Marginal abatement cost in $/tCO2 for each region at current control rate
 
-    return { # For frontend
+    return { # For frontend display
         "years": years,
         "emissions": emiss.emissions,
         "global_emissions": emiss.emissions.sum(axis=0),

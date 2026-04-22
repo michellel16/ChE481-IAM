@@ -11,7 +11,7 @@ def label_with_input(text, input_id, **input_kwargs):
         style={"display": "flex", "justifyContent": "space-between",
                "alignItems": "center", "marginTop": "13px", "marginBottom": "4px"},
         children=[
-            html.Span(text, style={"color": "#5a7a98", "fontSize": "10px", "fontWeight": "700",
+            html.Span(text, style={"color": "#8aaac8", "fontSize": "10px", "fontWeight": "700",
                                    "textTransform": "uppercase", "letterSpacing": "1px"}),
             dcc.Input(id=input_id, style={**INPUT_STYLE, "width": "60px"}, **input_kwargs),
         ],
@@ -45,7 +45,7 @@ def base_fig(height=460):
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor=BG, plot_bgcolor=PLOT_BG,
-        font={"color": "#b0c8e0", "family": "system-ui, sans-serif", "size": 12},
+        font={"color": "#b0c8e0", "family": "Cambria Math, Cambria, serif", "size": 12},
         legend={"bgcolor": "#161d2e", "bordercolor": "#243448", "borderwidth": 1,
                 "x": 0.99, "y": 0.99, "xanchor": "right", "yanchor": "top"},
         margin={"l": 60, "r": 30, "t": 50, "b": 50},
