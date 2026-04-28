@@ -6,6 +6,9 @@ sigma is carbon intensity (GtCO2/trillion USD), cr is emission control rate (fra
 - Emissions from land-use change: E_LU(t) = global trajectory declining linearly over years before distributed evenly across regions.
 
 Global Total: E_global(t) = sum_r E_EI(r,t) + E_LU(t)
+
+Note: Only industrial emissions are considered to be controllable (abatable), while other GHGs and forcings are taken as exogenous. New model
+should include all abatable emissions as endogenous category and excludes only a small fraction of forcings as nonabatable emission.
 """
 
 import numpy as np
@@ -22,8 +25,7 @@ class EmissionsModule:
         self.emissions_ei = np.zeros((n_regions, n_years)) # Initial emissions from energy + industry
         self.land_emissions = np.zeros(n_years) # Initial global land-use GtCO2/yr
 
-    def step(self, t: int, elapsed: float, sim_length: float,
-             y_gross: np.ndarray, sigma: np.ndarray, cr: np.ndarray):
+    def step(self, t: int, elapsed: float, sim_length: float,y_gross: np.ndarray, sigma: np.ndarray, cr: np.ndarray):
 
         # Regional energy & industrial emissions
         self.emissions_ei[:, t] = sigma * (1.0 - np.clip(cr, 0.0, 1.0)) * y_gross
@@ -33,7 +35,6 @@ class EmissionsModule:
         self.land_emissions[t] = self.land_2015 + (self.land_2100 - self.land_2015) * frac
 
         # Add land-use share to each region (equal distribution)
-        self.emissions[:, t] = (self.emissions_ei[:, t]
-                                 + self.land_emissions[t] / self.n_regions)
+        self.emissions[:, t] = (self.emissions_ei[:, t] + self.land_emissions[t] / self.n_regions)
 
         return self.emissions[:, t].copy(), float(self.emissions[:, t].sum())

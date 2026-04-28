@@ -51,8 +51,7 @@ class EconomyModule:
         self.pop[:, 0] = pop_0
         self.K[:, 0] = gdp_0 * ic["capital_to_gdp_ratio"]
         self.sigma[:, 0] = np.array(ic["sigma_2015"])
-        self.tfp[:, 0] = gdp_0 / (self.K[:, 0] ** self.gamma
-                                    * pop_0 ** (1.0 - self.gamma))
+        self.tfp[:, 0] = gdp_0 / (self.K[:, 0] ** self.gamma * pop_0 ** (1.0 - self.gamma))
 
     # Determine population growth, carbon intensity, TFP growth, gross economic output for damage and abatement modules
     def step_production(self, t: int, elapsed: float):
@@ -80,12 +79,10 @@ class EconomyModule:
             s_golden = self.gamma * self.delta_k / (self.delta_k + self.rho_ramsey)
             alpha = np.exp(-float(t) / 40.0)
             savings = s_golden + (self.savings_rate - s_golden) * alpha
-        else:
-            savings = self.savings_rate
+        else: savings = self.savings_rate
 
         self.consumption[:, t] = (1.0 - savings) * self.y_net[:, t] # What's left after savings (damage and abatement)
-
         self.gdp_per_capita[:, t] = self.y_net[:, t] / self.pop[:, t]
 
-        if t < self.n_years - 1: # Capital accumulation
-            self.K[:, t+1] = ((1.0 - self.delta_k) * self.K[:, t] + savings * self.y_net[:, t])
+        # Capital accumulation
+        if t < self.n_years - 1: self.K[:, t+1] = ((1.0 - self.delta_k) * self.K[:, t] + savings * self.y_net[:, t])
