@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: che481-iam
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir frontend app:server --bind "0.0.0.0:$PORT" --timeout 120 --workers 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0

@@ -27,7 +27,8 @@ app.index_string = '''<!DOCTYPE html>
 </html>'''
 
 app.layout = build_layout()
+server = app.server  # expose Flask server for gunicorn
 
 if __name__ == "__main__":
-    port = int(os.environ.get("IAM_FRONTEND_PORT", 8050))
-    app.run(debug=False, port=port)
+    port = int(os.environ.get("PORT", os.environ.get("IAM_FRONTEND_PORT", 8050)))
+    app.run(host="0.0.0.0", debug=False, port=port)

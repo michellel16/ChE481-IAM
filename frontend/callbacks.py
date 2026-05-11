@@ -1,12 +1,16 @@
-import urllib.error
+import gc
 
+import numpy as np
 import dash
 from dash import html, Input, Output, State, callback
 
 from constants import DAMAGE_INFO, WELFARE_INFO, ECONOMY_INFO, CLIMATE_INFO, SSP_INFO
-from backend_client import (
-    SSP_CONFIGS, ALL_REGION_INDICES, BACKEND_URL, _api_post,
-)
+from backend_client import SSP_CONFIGS, ALL_REGION_INDICES, run_iam
+
+def _to_list(v):
+    if isinstance(v, np.ndarray):
+        return v.tolist()
+    return v
 from tabs import (
     placeholder, tab_emissions, tab_temperature,
     tab_regional, tab_economics, tab_co2, tab_welfare, tab_about,
@@ -141,20 +145,58 @@ def run_model(_, ssp, damage, ensemble, years, cr_start, cr_end, welfare, econom
     if start >= end:
         return {"error": "Start year must be before end year."}
     try:
-        return _api_post("/api/run", {
-            "ssp":      ssp,
-            "start":    start,
-            "end":      end,
-            "damage":   damage,
-            "ensemble": int(ensemble),
-            "cr_start": float(cr_start),
-            "cr_end":   float(cr_end),
-            "welfare":  welfare,
-            "economy":  economy,
-            "climate":  climate or "dice",
-        })
-    except urllib.error.URLError:
-        return {"error": f"Backend unreachable at {BACKEND_URL}. Is it running?"}
+        r = run_iam(
+            ssp_key          = ssp,
+            start_year       = int(start),
+            end_year         = int(end),
+            damage_type      = damage,
+            ensemble_size    = int(ensemble),
+            cr_start_default = float(cr_start),
+            cr_end_default   = float(cr_end),
+            welfare_type     = welfare,
+            economy_type     = economy,
+            climate_type     = climate or "dice",
+        )
+        payload = {
+            "years":                    _to_list(r["years"]),
+            "global_emissions":         _to_list(r["global_emissions"]),
+            "land_emissions":           _to_list(r["land_emissions"]),
+            "emissions":                _to_list(r["emissions"]),
+            "cr":                       _to_list(r["cr"]),
+            "temperature":              _to_list(r["temperature"]),
+            "temperature_p5":           _to_list(r["temperature_p5"]),
+            "temperature_p50":          _to_list(r["temperature_p50"]),
+            "temperature_p95":          _to_list(r["temperature_p95"]),
+            "temperature_ensemble":     _to_list(r["temperature_ensemble"]) if int(ensemble) <= 20 else None,
+            "ecs_values":               _to_list(r["ecs_values"]),
+            "ensemble_size":            int(ensemble),
+            "t_ocean":                  _to_list(r["t_ocean"]),
+            "forcing":                  _to_list(r["forcing"]),
+            "f_co2":                    _to_list(r["f_co2"]),
+            "f_ex":                     _to_list(r["f_ex"]),
+            "co2_ppm":                  _to_list(r["co2_ppm"]),
+            "gdp":                      _to_list(r["gdp"]),
+            "gdp_gross":                _to_list(r["gdp_gross"]),
+            "gdp_per_capita":           _to_list(r["gdp_per_capita"]),
+            "scc":                      _to_list(r["scc"]),
+            "mac":                      _to_list(r["mac"]),
+            "ssp":                      r["ssp"],
+            "ssp_name":                 r["ssp_name"],
+            "welfare_type":             r.get("welfare_type", welfare),
+            "damage_type":              r.get("damage_type", damage),
+            "climate_type":             r.get("climate_type", climate),
+            "welfare":                  float(r["welfare"]),
+            "welfare_per_year":         _to_list(r["welfare_per_year"]),
+            "equity_equiv_consumption": _to_list(r["equity_equiv_consumption"]),
+            "regional_welfare":         _to_list(r["regional_welfare"]),
+            "gini_per_year":            _to_list(r["gini_per_year"]),
+            "regional_damage_frac":     _to_list(r["regional_damage_frac"]),
+            "consumption":              _to_list(r["consumption"]),
+            "population":               _to_list(r["population"]),
+        }
+        del r
+        gc.collect()
+        return payload
     except Exception as exc:
         return {"error": str(exc)}
 

@@ -1,0 +1,9 @@
+numpy>=1.26
+matplotlib>=3.8
+dash>=2.18
+plotly>=5.22
+fair>=2.1
+pandas>=2.0
+scipy>=1.11
+pooch>=1.7
+gunicorn>=21.0
