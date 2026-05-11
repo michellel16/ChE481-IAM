@@ -3,10 +3,6 @@ Simplified RICE/DICE Integrated Assessment Model
 
 Uses integrated modules to build model and pass required parameters into each other:
 - Economy, Emissions, Carbon cycle, Climate, Damage, Abatement, Welfare
-
-Climate options : 'dice' (default 2-box model) | 'fair' (FaIR v2 full physics)
-Damage options  : 'quadratic' | 'linear' | 'threshold' | 'kalkuhl'
-Welfare options : 'utilitarian' | 'prioritarian' | 'sufficientarian' | 'egalitarian'
 """
 
 import os
@@ -27,9 +23,8 @@ DEFAULT_PARAMS_PATH = os.path.join(_HERE, "data", "params.json")
 
 
 def load_params(path: str = DEFAULT_PARAMS_PATH) -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
-
 
 _params = load_params()
 SSP_CONFIGS = _params["ssp_configs"]
@@ -39,7 +34,7 @@ N_REGIONS = len(REGIONS)
 
 def run_iam(
     ssp_key: str = "SSP2",
-    start_year: int = 2015,
+    start_year: int = 2025,
     end_year: int = 2100,
     params_path: str = DEFAULT_PARAMS_PATH,
     damage_type: str = None,
@@ -51,29 +46,10 @@ def run_iam(
     economy_type: str = "market",
     climate_type: str = None,
 ) -> dict:
-    """
-    Run the IAM for a given SSP scenario and return all outputs.
 
-    Parameters
-    ----------
-    ssp_key        : SSP scenario key ('SSP1'–'SSP5')
-    start_year     : simulation start year
-    end_year       : simulation end year (inclusive)
-    params_path    : path to JSON parameter file
-    damage_type    : override damage model ('quadratic'|'linear'|'threshold'|'kalkuhl')
-    ensemble_size  : number of climate ensemble members (None → use params default)
-    ensemble_seed  : RNG seed for ECS sampling
-    cr_start_default : override initial emission control rate
-    cr_end_default   : override final emission control rate
-    welfare_type   : override welfare framework ('utilitarian'|'prioritarian'|
-                     'sufficientarian'|'egalitarian')
-    economy_type   : 'market' (fixed savings) | 'optimal' (Ramsey savings)
-    climate_type   : override climate model ('dice'|'fair')
-    """
     params = load_params(params_path)
     ssp_cfg = params["ssp_configs"][ssp_key]
 
-    # --- Resolve model type overrides ---
     if damage_type is not None:
         params["damage"]["type"] = damage_type
         params["damage"]["damage_type"] = damage_type  # backward compat
@@ -87,20 +63,17 @@ def run_iam(
         or params.get("climate", {}).get("type", "dice")
     ).lower()
 
-    # --- Time setup ---
     years = np.arange(start_year, end_year + 1)
     n_t = len(years)
     sim_len = float(end_year - start_year)
     n_reg = len(params["regions"])
 
-    # --- Initialize economy, emissions, damage, abatement ---
     econ = EconomyModule(params, ssp_cfg, n_t, economy_type=economy_type)
     emiss = EmissionsModule(params, n_reg, n_t)
     dmg = DamageModule(params)
     abate = AbatementModule(params)
     welfare_mod = WelfareModule(resolved_welfare, params)
 
-    # --- Initialize climate (DICE 2-box OR FaIR) ---
     use_fair = (resolved_climate == "fair")
     carb = None
     clim = None
@@ -115,7 +88,6 @@ def run_iam(
             ensemble_size=ensemble_size or 1,
             seed=ensemble_seed or 42,
         )
-        # Still create carbon cycle for m_at / co2_ppm output tracking
         carb = CarbonCycleModule(params, n_t)
     else:
         carb = CarbonCycleModule(params, n_t)
@@ -126,7 +98,7 @@ def run_iam(
             start_year=start_year,
         )
 
-    # --- Emission control rate schedule ---
+    # Emission control rate schedule
     cr = np.zeros((n_reg, n_t))
     cr_start = cr_start_default if cr_start_default is not None else ssp_cfg["cr_start"]
     cr_end = cr_end_default if cr_end_default is not None else ssp_cfg["cr_end"]
@@ -147,7 +119,7 @@ def run_iam(
     mac_arr = np.zeros((n_reg, n_t))
     dmg_frac_arr = np.zeros((n_reg, n_t))
 
-    # --- Main simulation loop ---
+    # Main simulation loop
     for ti in range(n_t):
         elapsed = float(years[ti] - start_year)
 
@@ -156,7 +128,6 @@ def run_iam(
 
         if use_fair:
             t_at, forcing = fair_clim.step(ti, glob_emiss, elapsed)
-            # Also advance DICE carbon cycle for consistent m_at / co2_ppm output
             m_at, co2_ppm = carb.step(ti, glob_emiss)
         else:
             m_at, co2_ppm = carb.step(ti, glob_emiss)
@@ -164,7 +135,7 @@ def run_iam(
 
         omega = dmg.calculate_damage_frac(t_at)
 
-        # --- Welfare-based regional damage distribution ---
+        # Welfare-based regional damage distribution
         # Utilitarian: uniform damage. All other frameworks: redistribute by GDP per capita.
         if resolved_welfare == "utilitarian" or ti == 0:
             dmg_frac_r = np.full(n_reg, omega)
@@ -172,15 +143,11 @@ def run_iam(
             gdppc_prev = np.maximum(econ.gdp_per_capita[:, ti - 1], 1e-6)
             pop_prev   = np.maximum(econ.pop[:, ti - 1], 1e-6)
             gdppc_mean = (gdppc_prev * pop_prev).sum() / pop_prev.sum()
-            # Each framework applies a different redistribution intensity
             if resolved_welfare == "prioritarian":
-                # Rawls-inspired: strongest weight on poorest regions
                 exponent = 1.0
             elif resolved_welfare == "egalitarian":
-                # Moderate Gini-based redistribution
                 exponent = 0.3
             else:
-                # sufficientarian: standard inverse-income scaling
                 exponent = 0.5
             multiplier = np.clip((gdppc_mean / gdppc_prev) ** exponent, 0.4, 3.0)
             dmg_frac_r = np.clip(omega * multiplier, 0.0, 0.99)
@@ -192,7 +159,7 @@ def run_iam(
         scc_arr[ti] = dmg.social_cost_of_carbon(t_at, float(y_gross.sum()))
         mac_arr[:, ti] = abate.marginal_abatement_cost(cr[:, ti], sigma, elapsed, start_year)
 
-    # --- Welfare aggregation ---
+    # Welfare aggregation
     welfare_results = welfare_mod.compute(
         econ.consumption / np.maximum(econ.pop, 1e-9),  # consumption per capita
         econ.pop,
@@ -203,7 +170,7 @@ def run_iam(
         years,
     )
 
-    # --- Collect climate module outputs ---
+    # Collect climate module outputs
     active_clim = fair_clim if use_fair else clim
 
     return {

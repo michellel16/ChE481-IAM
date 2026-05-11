@@ -18,20 +18,15 @@ _ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_ROOT, "backend"))
 from iam_model import run_iam, SSP_CONFIGS, REGIONS, N_REGIONS
 
-# ─── output directory (same folder as this script) ────────────────────────────
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ─── configurable settings ────────────────────────────────────────────────────
 START_YEAR   = 2015
 END_YEAR     = 2100
 REGIONAL_SSP = "SSP2"   # which SSP to use for the regional breakdown plot
 TOP_N        = 6        # how many regions to show in the regional panel
 HEATMAP_YEAR = 2100     # target year for the heatmap
 
-
-# ──────────────────────────────────────────────────────────────────────────────
 # FIGURE 1: Global emissions — all SSPs
-# ──────────────────────────────────────────────────────────────────────────────
 def plot_global_emissions(results: dict) -> None:
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -54,10 +49,7 @@ def plot_global_emissions(results: dict) -> None:
     print(f"Saved -> {path}")
     plt.show()
 
-
-# ──────────────────────────────────────────────────────────────────────────────
 # FIGURE 2: Global + regional breakdown for one scenario
-# ──────────────────────────────────────────────────────────────────────────────
 def plot_regional_emissions(res: dict, top_n: int = TOP_N) -> None:
     years    = res["years"]
     regional = res["emissions"]       # (N_REGIONS, n_years)
@@ -71,7 +63,6 @@ def plot_regional_emissions(res: dict, top_n: int = TOP_N) -> None:
     fig.suptitle(f"CO₂ Emissions — {res['ssp_name']}\n"
                  f"(Simplified RICE/DICE IAM)", fontsize=13)
 
-    # ── panel 1: global ───────────────────────────────────────────────────
     ax1.plot(years, global_e, color=res["ssp_color"],
              linewidth=2.4, label="Global total")
     ax1.axhline(0, color="grey", linewidth=0.8, linestyle="--")
@@ -80,7 +71,6 @@ def plot_regional_emissions(res: dict, top_n: int = TOP_N) -> None:
     ax1.legend(fontsize=10)
     ax1.grid(True, alpha=0.3)
 
-    # ── panel 2: top-N regions ────────────────────────────────────────────
     for color, idx in zip(colors, peak_idx):
         ax2.plot(years, regional[idx], color=color,
                  linewidth=1.9, label=REGIONS[idx])
@@ -99,9 +89,7 @@ def plot_regional_emissions(res: dict, top_n: int = TOP_N) -> None:
     plt.show()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # FIGURE 3: Temperature trajectories — all SSPs
-# ──────────────────────────────────────────────────────────────────────────────
 def plot_temperature(results: dict) -> None:
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -111,7 +99,6 @@ def plot_temperature(results: dict) -> None:
         # Ensemble mean line
         ax.plot(years, res["temperature"],
                 color=color, linewidth=2.2, label=res["ssp_name"])
-        # 5th–95th percentile shaded band (if ensemble was used)
         if res.get("ensemble_size", 1) > 1:
             ax.fill_between(years,
                             res["temperature_p5"],
@@ -143,10 +130,7 @@ def plot_temperature(results: dict) -> None:
     print(f"Saved -> {path}")
     plt.show()
 
-
-# ──────────────────────────────────────────────────────────────────────────────
 # FIGURE 4: Regional emissions heatmap at target year
-# ──────────────────────────────────────────────────────────────────────────────
 def plot_heatmap(results: dict, target_year: int = HEATMAP_YEAR) -> None:
     ssp_keys  = list(results.keys())
     ssp_labels = [SSP_CONFIGS[k]["name"].split("–")[0].strip()
@@ -181,16 +165,12 @@ def plot_heatmap(results: dict, target_year: int = HEATMAP_YEAR) -> None:
     print(f"Saved -> {path}")
     plt.show()
 
-
-# ──────────────────────────────────────────────────────────────────────────────
 # MAIN
-# ──────────────────────────────────────────────────────────────────────────────
 def main():
     print("=" * 60)
     print("  Simplified RICE/DICE Integrated Assessment Model")
     print("=" * 60)
 
-    # ── run all SSP scenarios ─────────────────────────────────────────────
     results = {}
     for ssp_key in SSP_CONFIGS:
         name = SSP_CONFIGS[ssp_key]['name'].replace('\u2013', '-')
@@ -201,7 +181,6 @@ def main():
             end_year   = END_YEAR,
         )
 
-    # ── summary table ─────────────────────────────────────────────────────
     print(f"\n{'-'*62}")
     print(f"  {'Scenario':<38}  {'Emis. 2100 (GtCO2/yr)':>21}  {'dT 2100 (C)':>11}")
     print(f"  {'-'*38}  {'-'*21}  {'-'*11}")
@@ -212,7 +191,6 @@ def main():
         print(f"  {name:<38}  {e:>21.1f}  {t:>11.2f}")
     print(f"{'-'*62}\n")
 
-    # ── plots ─────────────────────────────────────────────────────────────
     print("Generating figures ...")
     plot_global_emissions(results)
     plot_regional_emissions(results[REGIONAL_SSP])
@@ -220,7 +198,6 @@ def main():
     plot_heatmap(results, target_year=HEATMAP_YEAR)
 
     print("\nAll figures saved to:", OUT_DIR)
-
 
 if __name__ == "__main__":
     main()

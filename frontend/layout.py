@@ -61,7 +61,7 @@ def build_layout():
                                    "marginBottom": "4px"},
                             children=[
                                 dcc.Input(id="year-start-input", type="number",
-                                          min=2015, max=2095, step=5, value=2015,
+                                          min=2025, max=2095, step=5, value=2025,
                                           style={**INPUT_STYLE, "flex": 1}),
                                 html.Span("→", style={"color": "#7a9ab8", "fontSize": "12px",
                                                        "flexShrink": 0}),
@@ -72,8 +72,8 @@ def build_layout():
                         ),
                         html.Div(className="slider-wrap", children=[
                             dcc.RangeSlider(
-                                id="years", min=2015, max=2100, step=5, value=[2015, 2100],
-                                marks={2015: "2015", 2050: "2050", 2075: "2075", 2100: "2100"},
+                                id="years", min=2025, max=2100, step=5, value=[2025, 2100],
+                                marks={2025: "2025", 2050: "2050", 2075: "2075", 2100: "2100"},
                                 tooltip={"placement": "bottom", "always_visible": False},
                             ),
                         ]),
@@ -85,7 +85,7 @@ def build_layout():
                         dcc.Dropdown(
                             id="climate", clearable=False, searchable=False, value="dice",
                             options=[
-                                {"label": "DICE 2-box (default)",  "value": "dice"},
+                                {"label": "2-box (DICE standard)",  "value": "dice"},
                                 {"label": "FaIR v2 (full physics)",      "value": "fair"},
                             ],
                             style={"fontSize": "14px"},
@@ -98,8 +98,8 @@ def build_layout():
                             options=[
                                 {"label": "Quadratic (DICE standard)", "value": "quadratic"},
                                 {"label": "Linear", "value": "linear"},
-                                {"label": "Threshold (3 °C tipping point)", "value": "threshold"},
-                                {"label": "Kalkuhl (rate-of-change, 2019)", "value": "kalkuhl"},
+                                {"label": "Threshold (3°C tipping point)", "value": "threshold"},
+                                {"label": "Kalkuhl (rate of change)", "value": "kalkuhl"},
                             ],
                             style={"fontSize": "14px"},
                         ),

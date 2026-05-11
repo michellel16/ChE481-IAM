@@ -14,7 +14,7 @@ class EconomyModule:
     def __init__(self, params: dict, ssp_cfg: dict, n_years: int, economy_type: str = "market"):
         ic = params["initial_conditions"]
         ep = params["economy"]
-        neo = ep.get("neoclassical", ep)  # support nested or flat format
+        neo = ep.get("neoclassical", ep)
 
         self.economy_type = economy_type
         self.rho_ramsey = 0.015
@@ -80,8 +80,6 @@ class EconomyModule:
         # Net economic output
         self.y_net[:, t] = np.maximum(self.y_gross[:, t] * (1.0 - damage_frac) - self.y_gross[:, t] * abate_frac,0.0)
 
-        # Savings rate: market uses fixed regional rates; optimal converges toward Ramsey golden-rule target.
-        # Full formula from JUSTICE/RICE50: s* = γ·(δk+ζ) / (δk + ζ·η + ρ)
         if self.economy_type == "optimal":
             s_golden = (self.gamma * (self.delta_k + self.zeta)
                         / (self.delta_k + self.zeta * self.elasmu + self.rho_ramsey))

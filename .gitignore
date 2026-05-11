@@ -1,1 +1,5 @@
-g
+.claude/
+.idea/
+__pycache__/
+*.pyc
+.venv/

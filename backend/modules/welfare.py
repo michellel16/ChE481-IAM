@@ -23,9 +23,7 @@ import numpy as np
 
 _SMALL = 1e-9
 
-
 def _utility(c: np.ndarray, eta: float) -> np.ndarray:
-    """Isoelastic utility u(c) = c^(1-eta)/(1-eta), with log limit at eta=1."""
     c = np.maximum(c, _SMALL)
     if abs(eta - 1.0) < 1e-10:
         return np.log(c)
@@ -33,14 +31,12 @@ def _utility(c: np.ndarray, eta: float) -> np.ndarray:
 
 
 def _inv_utility(u: np.ndarray, eta: float) -> np.ndarray:
-    """Inverse isoelastic utility."""
     if abs(eta - 1.0) < 1e-10:
         return np.exp(u)
     return np.maximum(u * (1.0 - eta), _SMALL) ** (1.0 / (1.0 - eta))
 
 
 def _gini_1d(x: np.ndarray) -> float:
-    """Gini coefficient for a 1-D array (all non-negative)."""
     x = np.maximum(x, 0.0)
     if x.sum() < _SMALL:
         return 0.0
@@ -51,14 +47,14 @@ def _gini_1d(x: np.ndarray) -> float:
 
 
 _TYPE_DEFAULTS = {
-    "utilitarian":    {"elasmu": 1.45, "prstp": 0.015, "inequality_aversion": 0.0,
-                       "sufficiency_threshold": 0.0, "egality_strictness": 0.0},
-    "prioritarian":   {"elasmu": 1.45, "prstp": 0.0,   "inequality_aversion": 2.0,
-                       "sufficiency_threshold": 0.0, "egality_strictness": 0.0},
-    "sufficientarian":{"elasmu": 1.45, "prstp": 0.015, "inequality_aversion": 0.0,
+    "utilitarian": {"elasmu": 1.45, "prstp": 0.015, "inequality_aversion": 0.0,
+                    "sufficiency_threshold": 0.0, "egality_strictness": 0.0},
+    "prioritarian": {"elasmu": 1.45, "prstp": 0.0,   "inequality_aversion": 2.0,
+                     "sufficiency_threshold": 0.0, "egality_strictness": 0.0},
+    "sufficientarian": {"elasmu": 1.45, "prstp": 0.015, "inequality_aversion": 0.0,
                        "sufficiency_threshold": 0.456, "egality_strictness": 0.0},
-    "egalitarian":    {"elasmu": 1.45, "prstp": 0.0,   "inequality_aversion": 0.5,
-                       "sufficiency_threshold": 0.0, "egality_strictness": 1.0},
+    "egalitarian": {"elasmu": 1.45, "prstp": 0.0,   "inequality_aversion": 0.5,
+                    "sufficiency_threshold": 0.0, "egality_strictness": 1.0},
 }
 
 

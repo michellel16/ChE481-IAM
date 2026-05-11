@@ -7,15 +7,15 @@
 
   "initial_conditions": {
     "_comment": "2025 baseline: GDP in trillion 2015 USD PPP, population in billions, sigma in GtCO2/trillion USD",
-    "gdp_0":  [32.38, 19.5, 4.8, 3.4, 2.1, 19.5, 8.0, 4.6, 4.7, 8.4, 8.5, 3.0],
-    "pop_0":  [0.320, 0.510, 0.127, 0.143, 0.150, 1.370, 1.310, 0.410, 1.190, 0.630, 1.100, 0.200],
-    "sigma_0":[0.294, 0.178, 0.258, 0.482, 0.381, 0.546, 0.284, 0.407, 0.277, 0.213, 0.335, 0.307],
+    "gdp_0":  [22.25, 22.19, 5.05, 3.57, 2.69, 34.92, 15.02, 5.77, 6.32, 9.94, 12.58, 3.66],
+    "pop_0":  [0.341, 0.449, 0.123, 0.144, 0.162, 1.409, 1.441, 0.520, 1.470, 0.664, 1.220, 0.212],
+    "sigma_0":[0.246, 0.146, 0.211, 0.427, 0.335, 0.470, 0.247, 0.361, 0.243, 0.182, 0.291, 0.256],
     "capital_to_gdp_ratio": 3.0,
     "savings_rate": [0.22, 0.21, 0.23, 0.25, 0.26, 0.43, 0.30, 0.27, 0.20, 0.19, 0.30, 0.22]
   },
 
   "economy": {
-    "_comment": "Neoclassical Cobb-Douglas: Y = A * K^gamma * L^(1-gamma). TFP growth decays exponentially.",
+    "_comment": "Neoclassical Cobb-Douglas",
     "type": "neoclassical",
     "neoclassical": {
       "capital_elasticity": 0.3,
@@ -29,7 +29,7 @@
   },
 
   "emissions": {
-    "_comment": "Global land-use change emissions (GtCO2/yr), linearly declining 2015→2100.",
+    "_comment": "Global land-use change emissions (GtCO2/yr).",
     "land_use_2015_gtco2": 4.0,
     "land_use_2100_gtco2": 1.0
   },
@@ -42,8 +42,8 @@
     "m_at_2015": 851.0,
     "m_up_2015": 1537.0,
     "m_lo_2015": 10012.0,
-    "m_at_2025": 900.0,
-    "m_up_2025": 1570.0,
+    "m_at_2025": 897.0,
+    "m_up_2025": 1575.0,
     "m_lo_2025": 10030.0,
     "b12": 0.0183,
     "b23": 0.00050,
@@ -63,11 +63,11 @@
       "c4": 0.0050,
       "t_at_2015": 0.85,
       "t_lo_2015": 0.028,
-      "t_at_2025": 1.10,
-      "t_lo_2025": 0.055,
+      "t_at_2025": 1.20,
+      "t_lo_2025": 0.060,
       "f_ex_2015": 0.30,
       "f_ex_2100": 0.70,
-      "f_ex_2025": 0.40
+      "f_ex_2025": 0.45
     },
 
     "fair": {
@@ -89,11 +89,11 @@
   },
 
   "damage": {
-    "_comment": "Climate damage model selection: 'quadratic'|'linear'|'threshold'|'kalkuhl'.",
+    "_comment": "Climate damage model selection",
     "type": "quadratic",
 
     "quadratic": {
-      "_comment": "DICE-style quadratic: omega = psi2 * T^2. psi1 adds linear term.",
+      "_comment": "",
       "psi1": 0.0,
       "psi2": 0.00267
     },
@@ -128,11 +128,11 @@
   },
 
   "welfare": {
-    "_comment": "Social welfare function type: 'utilitarian'|'prioritarian'|'sufficientarian'|'egalitarian'.",
+    "_comment": "Social welfare function type",
     "type": "utilitarian",
 
     "utilitarian": {
-      "_comment": "Benthamite sum of discounted utilities. Neutral on inequality.",
+      "_comment": "Neutral on inequality.",
       "elasmu": 1.45,
       "prstp": 0.015,
       "inequality_aversion": 0.0,
@@ -141,7 +141,7 @@
     },
 
     "prioritarian": {
-      "_comment": "Higher weight on worse-off. Zero pure time preference.",
+      "_comment": "Higher weight on worse-off.",
       "elasmu": 1.45,
       "prstp": 0.0,
       "inequality_aversion": 2.0,
@@ -150,7 +150,7 @@
     },
 
     "sufficientarian": {
-      "_comment": "Sufficiency floor at $1.25/day (World Bank poverty line, 2005 USD PPP ≈ $0.456K/yr).",
+      "_comment": "Sufficiency floor at World Bank poverty line.",
       "elasmu": 1.45,
       "prstp": 0.015,
       "inequality_aversion": 0.0,
@@ -172,7 +172,7 @@
   },
 
   "abatement": {
-    "_comment": "DICE backstop MAC curve: Lambda = cost1 * cr^theta2. pback in $/tCO2 (2010 base).",
+    "_comment": "DICE backstop MAC curve",
     "theta2": 2.8,
     "pback": 344.0,
     "gback": 0.005,
@@ -180,7 +180,7 @@
   },
 
   "ensemble": {
-    "_comment": "ECS ensemble for DICE climate: log-normal matching IPCC AR6. size=1 → deterministic.",
+    "_comment": "ECS ensemble for DICE climate",
     "size": 20,
     "ecs_median": 3.0,
     "ecs_sigma_log": 0.25,

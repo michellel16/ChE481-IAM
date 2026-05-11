@@ -47,7 +47,7 @@ def run():
     body = request.get_json(force=True)
 
     ssp = body.get("ssp",      "SSP2")
-    start = int(body.get("start", 2015))
+    start = int(body.get("start", 2025))
     end = int(body.get("end",   2100))
     damage = body.get("damage",   "quadratic")
     ensemble = max(1, min(int(body.get("ensemble", 10)), 30))

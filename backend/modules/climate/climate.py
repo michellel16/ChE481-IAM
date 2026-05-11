@@ -8,17 +8,6 @@ Simplified representation:
 - Forcing eqn calculates impact of emissions on radiation balance of globe
 """
 
-# Maybe incorporate FAIR model for more robust climate energy balances
-'''
-Included in FAIR not included in RICE/DICE model:
-- methane from IIRF
-- projects temperature out to 2300 starting from 1750
-- airborne emissions, gas partitions
-- interactions between co2, ch4, n2o, etc. for radiative forcing (etminan2016, meinshausen2020, ..)
-
-a lot more robust than eqns from DICE/RICE model
-'''
-
 import numpy as np
 
 class ClimateModule:
@@ -38,8 +27,10 @@ class ClimateModule:
         self.c1 = dice.get("c1", cp.get("c1", 0.0196))
         self.c3 = dice.get("c3", cp.get("c3", 0.0176))
         self.c4 = dice.get("c4", cp.get("c4", 0.0050))
-        self.f_ex_2015 = dice.get("f_ex_2015", cp.get("f_ex_2015", 0.30))
+        yr_key = f"f_ex_{start_year}"
+        self.f_ex_start = dice.get(yr_key, cp.get(yr_key, dice.get("f_ex_2015", cp.get("f_ex_2015", 0.30))))
         self.f_ex_2100 = dice.get("f_ex_2100", cp.get("f_ex_2100", 0.70))
+        self._f_ex_span = max(2100 - start_year, 1)
         self.m_at_pre = params["carbon_cycle"]["m_at_preindustrial"]
 
         self.ecs_values = self._sample_ecs(dice, ep, seed)
@@ -76,8 +67,8 @@ class ClimateModule:
     def step(self, t: int, m_at: float, elapsed: float):
         self.f_co2[t] = self.eta * np.log2(max(m_at / self.m_at_pre, 1e-9)) # Forcing, only dependent on atmospheric CO2
 
-        frac = min(elapsed / 85.0, 1.0) # Forcing not from CO2 ramping up
-        self.f_ex[t] = self.f_ex_2015 + (self.f_ex_2100 - self.f_ex_2015) * frac
+        frac = min(elapsed / self._f_ex_span, 1.0) # Forcing not from CO2 ramping up
+        self.f_ex[t] = self.f_ex_start + (self.f_ex_2100 - self.f_ex_start) * frac
         self.forcing[t] = self.f_co2[t] + self.f_ex[t]
 
         if t < self.t_at.shape[0] - 1: # Advance temperature dynamics for one year, for all ensemble members

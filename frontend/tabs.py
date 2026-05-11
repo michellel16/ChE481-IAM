@@ -65,12 +65,7 @@ def tab_emissions(d, yrs):
     cum    = sum((glob[i] + glob[i-1]) * 0.5 * (yrs[i] - yrs[i-1]) for i in range(1, len(yrs)))
     return html.Div([
         _ctx(
-            "Global CO₂ emissions track the total warming forcing the climate system receives "
-            "from human activity. The emission control rate μ (right axis) shows the fraction "
-            "of industrial emissions being abated — raising μ suppresses emissions but increases "
-            "abatement costs. Peak emissions and cumulative totals are the primary drivers of "
-            "long-run temperature outcomes: carbon dioxide lingers in the atmosphere for centuries, "
-            "so early action prevents irreversible lock-in of warming."
+            "Global CO₂ emissions quantify emissions from human activity (industrial energy and land-use) while considering emission control rate. μ is the fraction of industrial emissions being abated, representing climate policy. Raising μ decreases emissions but increases abatement costs."
         ),
         dcc.Graph(figure=fig, config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
         summary_box([
@@ -107,9 +102,9 @@ def tab_temperature(d, yrs):
                              name="Ensemble Mean",
                              line={"color": "#e9c46a", "width": 1.5, "dash": "dot"},
                              hovertemplate="Ensemble Mean: %{y:.2f} °C<extra></extra>"))
-    for temp, lbl, col in [(1.5, "1.5°C (Paris-Climate Agreement)", "#90be6d"),
-                           (2.0, "2°C (Paris-Climate Agreement)", "#e9c46a"),
-                           (3.0, "3°C Threshold","#e76f51")]:
+    for temp, lbl, col in [(1.5, "1.5°C", "#90be6d"),
+                           (2.0, "2°C", "#e9c46a"),
+                           (3.0, "3°C","#e76f51")]:
         fig.add_hline(y=temp, line={"color": col, "width": 1, "dash": "dash"},
                       annotation_text=lbl, annotation_position="right",
                       annotation_font={"color": col, "size": 12})
@@ -119,21 +114,14 @@ def tab_temperature(d, yrs):
     ecs = d["ecs_values"]
     return html.Div([
         _ctx(
-            "Global mean temperature rise above pre-industrial levels is the central output of "
-            "the climate system. The ensemble spread reflects uncertainty in equilibrium climate "
-            "sensitivity (ECS) — the long-run warming from a doubling of CO₂. The IPCC AR6 "
-            "estimates ECS at 2.5–4°C (likely range). Paris Agreement targets (1.5°C and 2°C) "
-            "are shown as reference lines; exceeding these thresholds risks activating climate "
-            "tipping points and non-linear damage regimes that standard damage functions do not "
-            "capture. Even if median outcomes are acceptable, the upper tail of the ensemble "
-            "represents genuine catastrophic risk — the scientific case for precautionary policy."
+            "Global mean temperature rise above pre-industrial levels. The ensemble reflects uncertainty in equilibrium climate sensitivity (ECS), which the IPCC AR6 estimates to be around 2.5 –4°C. Exceeding the Paris Agreement temperature target (1.5 and 2°C) or the 3°C threshold can risk tipping points that standard damage functions do not capture. Even if median estimates are acceptable, the upper tail of the ensemble can represent catastrophic risk."
         ),
         dcc.Graph(figure=fig, config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
         summary_box([
             ("Final Median Warming", f"{d['temperature_p50'][-1]:.2f} °C", "vs Pre-Industrial"),
             ("Warming In 90 % Range", f"{p5[-1]:.2f}–{p95[-1]:.2f} °C", f"({n_ens} Ensemble Members)"),
-            ("Equilibrium Climate Sensitivity Range", f"{min(ecs):.2f}–{max(ecs):.2f} °C", ""),
-            ("Equilibrium Climate Sensitivity Median", f"{sorted(ecs)[len(ecs)//2]:.2f} °C", ""),
+            ("ECS Range", f"{min(ecs):.2f}–{max(ecs):.2f} °C", ""),
+            ("ECS Median", f"{sorted(ecs)[len(ecs)//2]:.2f} °C", ""),
         ]),
     ])
 
@@ -166,13 +154,8 @@ def tab_regional(d, yrs, sel):
                        margin={"l": 60, "r": 30, "t": 45, "b": 60})
     return html.Div([
         _ctx(
-            "Regional emissions disaggregate global totals into the model's 12 geographic units. "
-            "The stacked area chart shows each region's contribution to total industrial/energy CO₂ "
-            "— the baseline trajectory is set by the chosen SSP, while the emission control rate μ "
-            "applies across regions. The bar chart shows the regional breakdown in the final year, "
-            "revealing where emissions are concentrated and how the distribution evolves over time. "
-            "Regional disparities reflect differences in economic scale, energy intensity, and "
-            "population — key inputs to both the damage assessment and equity debates."
+            "Emissions breakdown across 12 geographical regions. The graphs display each region's contribution to total emissions and how the distribution develops over time. "
+            "Regional disparities reflect differences in economic scale, energy intensity, and population, which are relevant to damage assessment and equity."
         ),
         dcc.Graph(figure=fig,  config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
         dcc.Graph(figure=fig2, config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
@@ -217,17 +200,14 @@ def tab_economics(d, yrs, sel):
     fig.update_yaxes(title_text="USD / tCO₂",   row=2, col=2)
     fig.update_annotations(font_size=19, yshift=14)
     children = [
-        _ctx(
-            "The economics tab shows the fundamental tradeoff at the heart of climate-economy "
-            "analysis. Net GDP reflects gross output minus climate damages and abatement costs — "
-            "the core tension in cost-benefit climate policy. The Social Cost of Carbon (SCC) is "
-            "the policy-critical metric: when the marginal abatement cost (MAC) is below the SCC, "
-            "further emissions reduction is welfare-improving; when the MAC exceeds the SCC, "
-            "additional abatement costs more than the avoided damage it prevents. "
-            "Higher emission control rates μ depress near-term GDP but raise long-run GDP by "
-            "avoiding climate damages — the magnitude of this tradeoff depends critically on the "
-            "damage function and discount rate assumptions."
-        ),
+        html.Div([
+            "Climate-economy tradeoff analysis. "
+            "Net GDP reflects gross output minus climate damages and abatement costs, which is important to cost-benefit climate policy. "
+            "High emission control rates decrease short-term GDP but raise long-run GDP by avoiding climate damages. The magnitude of this tradeoff depends on damage function.",
+            html.Br(), html.Br(),
+            "Social Cost of Carbon (SCC) is the monetary damage from emitting one ton of CO2 while marginal abatement cost (MAC) is the cost of reducing one ton of CO2. "
+            "When MAC is below SCC, further emissions reduction is welfare-improving. When MAC exceeds SCC, additional abatement costs more than the avoided damage it prevents.",
+        ], style=_CONTEXT_STYLE),
         dcc.Graph(figure=fig, config={"displayModeBar": False}, responsive=True, style={"height": "840px"}),
     ]
 
@@ -282,14 +262,8 @@ def tab_co2(d, yrs):
     peak_i = int(max(range(len(d["co2_ppm"])), key=lambda i: d["co2_ppm"][i]))
     return html.Div([
         _ctx(
-            "Atmospheric CO₂ concentration (ppm) is the primary driver of radiative forcing — "
-            "the net energy imbalance warming the planet. Pre-industrial CO₂ was ~278 ppm; "
-            "2023 levels reached ~423 ppm, already well above any level seen in 800,000 years of "
-            "ice-core records. Total radiative forcing (W/m²) combines CO₂ with non-CO₂ "
-            "greenhouse gases and exogenous factors (aerosols, solar). Because CO₂ persists in "
-            "the atmosphere for centuries, even reaching net-zero emissions does not immediately "
-            "stop warming — it only stops the acceleration. This makes peak CO₂ concentration "
-            "a more policy-relevant indicator than the annual emissions rate."
+            "Total radiative forcing considers both CO₂ with non-CO₂ greenhouse gases and exogenous factors (aerosols, solar). Since CO₂ lingers in "
+            "the atmosphere for centuries, reaching net-zero emissions does not immediately stop warming, only the acceleration. Thus, peak CO₂ concentration can be more policy-relevant than the annual emissions rate."
         ),
         dcc.Graph(figure=fig,  config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
         dcc.Graph(figure=fig2, config={"displayModeBar": False}, responsive=True, style={"height": "600px"}),
@@ -402,31 +376,14 @@ def tab_welfare(d, yrs, sel):
     cfg = {"displayModeBar": False}
     children = [
         _ctx(
-            "Damage fractions show climate losses as a percentage of regional gross output — "
-            "small on average but highly unequal across regions. Tropical, low-elevation, and "
-            "lower-income regions typically face disproportionately large burdens relative to "
-            "their economic share. The damage multiplier chart reveals how each region's burden "
-            "compares to the global uniform average under the chosen welfare function — red bars "
-            "signal regions bearing above-average relative damages. The Gini index tracks whether "
-            "climate change and abatement policy collectively narrow or widen consumption "
-            "inequality over time: a rising Gini means growth and damages are accruing "
-            "unequally. These equity dimensions are central to climate justice debates and "
-            "international climate finance negotiations."
+            "Damage fractions show climate losses as a percentage of regional gross output, where lower-income regions face disproportionately large burdens."
+            " The damage multiplier chart displays how each region's burden compares to the global uniform average under the welfare function."
+            " Gini index tracks the effect of climate change and abatement policy on consumption inequality over time."
+            " Rising index means growth and damages are accumulating unequally, which is relevant to climate justice and international climate finance negotiations."
         ),
         dcc.Graph(figure=fig1, config=cfg, responsive=True, style={"height": "600px"}),
         dcc.Graph(figure=fig2, config=cfg, responsive=True, style={"height": "380px"}),
         dcc.Graph(figure=fig3, config=cfg, responsive=True, style={"height": "380px"}),
-        html.Div(
-            "Note: The Gini index changes little across welfare functions because the welfare "
-            "function in this model is a measurement framework — it changes how outcomes are "
-            "scored, not how the economy operates. The only feedback into the economy is a "
-            "small redistribution of climate damage burdens between regions, which is dwarfed "
-            "by the large baseline consumption inequality between regions set by the SSP. To "
-            "meaningfully shift the Gini, the model would need inter-regional transfers, "
-            "differentiated abatement burden-sharing, or welfare-weighted savings rates.",
-            style={"color": "#6a8aa8", "fontSize": "12px", "fontStyle": "italic",
-                   "lineHeight": "1.55", "marginTop": "4px", "marginBottom": "12px"},
-        ),
         summary_box([
             ("Highest Regional Damage", f"{max_dmg:.2f}% of GDP", f"({REGIONS[max_ri]})"),
             ("Lowest Regional Damage",  f"{min_dmg:.2f}% of GDP", f"({REGIONS[min_ri]})"),
@@ -438,17 +395,17 @@ def tab_welfare(d, yrs, sel):
 def tab_about():
     cards = [
         html.Div(style={
-            "border": "1px solid #243448",
+            "border": "1.5px solid #2e4a64",
             "padding": "14px 18px", "marginBottom": "10px",
         }, children=[
-            html.Div(title, style={"color": "#c8dff0", "fontWeight": "700",
-                                   "fontSize": "14px", "marginBottom": "6px"}),
+            html.Div(title, style={"color": ACCENT, "fontWeight": "700",
+                                   "fontSize": "17px", "marginBottom": "6px"}),
             dcc.Markdown(body, className="about-body"),
         ])
         for title, body in ABOUT_TEXT
     ]
     return html.Div(
-        style={"maxWidth": "1100px", "margin": "0 auto", "paddingTop": "8px"},
+        style={"maxWidth": "900px", "margin": "0 auto", "paddingTop": "8px"},
         children=[
             html.Div("About This Model",
                      style={"color": "#b0c8e0", "fontSize": "16px",

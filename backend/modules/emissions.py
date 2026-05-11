@@ -16,7 +16,7 @@ import numpy as np
 class EmissionsModule:
     def __init__(self, params: dict, n_regions: int, n_years: int):
         ep = params["emissions"]
-        self.land_2015 = ep["land_use_2015_gtco2"]
+        self.land_start = ep.get("land_use_2025_gtco2", ep.get("land_use_2015_gtco2", 4.0))
         self.land_2100 = ep["land_use_2100_gtco2"]
         self.n_regions = n_regions
         self.n_years = n_years
@@ -32,7 +32,7 @@ class EmissionsModule:
 
         # Land-use change (global,linearly declining)
         frac = min(elapsed / max(sim_length, 1.0), 1.0)
-        self.land_emissions[t] = self.land_2015 + (self.land_2100 - self.land_2015) * frac
+        self.land_emissions[t] = self.land_start + (self.land_2100 - self.land_start) * frac
 
         # Add land-use share to each region (equal distribution)
         self.emissions[:, t] = (self.emissions_ei[:, t] + self.land_emissions[t] / self.n_regions)

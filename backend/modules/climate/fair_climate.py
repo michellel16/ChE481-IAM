@@ -19,8 +19,6 @@ This module needs four files that can be downloaded from the JUSTICE project
 
 Run `python -m backend.modules.climate.fair_climate --download` to fetch them.
 
-References
-----------
 Smith et al. (2021) FaIR v2. https://doi.org/10.5194/gmd-14-3007-2021
 JUSTICE model: https://github.com/JEME-ICL/JUSTICE (CoupledFAIR)
 """
@@ -57,7 +55,7 @@ try:
     FAIR_AVAILABLE = True
 except ImportError:
     FAIR_AVAILABLE = False
-    class FAIR:  # noqa: N801 — stub so the class definition below doesn't NameError
+    class FAIR:
         pass
 
 _FAIR_START_YEAR = 1750
@@ -73,15 +71,7 @@ _SSP_MAP = {
     "SSP4-6.0": "ssp460", "SSP5-8.5": "ssp585",
 }
 
-
 def _find_fair_data_path(hint: str = None) -> str | None:
-    """
-    Locate the directory containing the FAIR configuration CSV files.
-    Search order:
-      1. hint (if provided and valid)
-      2. backend/data/fair_input/ (relative to this file)
-      3. JUSTICE project's data/input/ on the same machine
-    """
     candidates = []
     if hint:
         candidates.append(hint)
@@ -89,7 +79,6 @@ def _find_fair_data_path(hint: str = None) -> str | None:
     here = os.path.dirname(os.path.abspath(__file__))
     candidates.append(os.path.normpath(os.path.join(here, "..", "..", "data", "fair_input")))
 
-    # Try JUSTICE project sibling directory
     for levels_up in range(3, 7):
         parent = here
         for _ in range(levels_up):
@@ -105,18 +94,6 @@ def _find_fair_data_path(hint: str = None) -> str | None:
 
 
 class FAIRClimateModule(FAIR):
-    """
-    FaIR v2 climate module adapted for step-by-step IAM integration.
-
-    Exposes the same interface as ClimateModule (2-box model):
-      - t_at[n_years, ensemble_size]  surface temperature anomaly (°C vs pre-industrial)
-      - t_lo[n_years, ensemble_size]  placeholder (deep-ocean not directly from FAIR)
-      - forcing[n_years]              total radiative forcing (W m⁻²)
-      - f_co2[n_years]                CO2 forcing component
-      - f_ex[n_years]                 non-CO2 forcing component
-      - step(ti, global_emiss_gtco2, elapsed) → (mean_temp, total_forcing)
-    """
-
     def __init__(
         self,
         params: dict,
@@ -148,7 +125,6 @@ class FAIRClimateModule(FAIR):
         self._iam_end_year = start_year + n_years - 1
         self.ensemble_size = ensemble_size
 
-        # Public arrays matching ClimateModule interface
         self.t_at = np.zeros((n_years, ensemble_size))
         self.t_lo = np.zeros((n_years, ensemble_size))
         self.f_co2 = np.zeros(n_years)
@@ -165,16 +141,9 @@ class FAIRClimateModule(FAIR):
             )
 
         self._initialize_fair(scenario, ensemble_size)
-        # Overwrite FAIR's xarray `forcing` DataArray with our numpy IAM output array,
-        # which must come after allocate() runs inside _initialize_fair.
         self.forcing = np.zeros(n_years)
 
-    # ------------------------------------------------------------------
-    # Initialization
-    # ------------------------------------------------------------------
-
     def _initialize_fair(self, scenario: str, ensemble_size: int):
-        """Set up FAIR arrays and run historical simulation to IAM start year."""
         self._scenario = scenario
         self._iam_scenario = scenario
 
@@ -188,10 +157,8 @@ class FAIRClimateModule(FAIR):
 
         self._fill_fair_data([scenario], ensemble_size)
 
-        # Purge future CO2 FFI emissions (keep historical)
         self._purge_emissions([scenario])
 
-        # Part of JUSTICE pre-run: consolidate CO2 indices
         if (self._co2_indices.sum() + self._co2_ffi_indices.sum()
                 + self._co2_afolu_indices.sum() == 3):
             self.emissions[..., self._co2_indices] = (
@@ -204,10 +171,8 @@ class FAIRClimateModule(FAIR):
             + self.cumulative_emissions[0, ...]
         ).data
 
-        # Cache numpy arrays for performance
         self._cache_arrays()
 
-        # Pre-compute GHG forcing offset
         if self._routine_flags["ghg"] and self.ghg_method == "meinshausen2020":
             self.ghg_forcing_offset = meinshausen2020(
                 self.baseline_concentration_array[None, None, ...],
@@ -218,26 +183,22 @@ class FAIRClimateModule(FAIR):
                 self._minor_ghg_indices,
             )
 
-        # Set initial Cummins state
         self.forcing_sum_array[0:1, ...] = np.nansum(
             self.forcing_array[0:1, ...], axis=SPECIES_AXIS
         )
         self.cummins_state_array[0, ..., 0] = self.forcing_sum_array[0, ...]
         self.cummins_state_array[..., 1:] = self.temperature.data
 
-        # Run FAIR from 1750 to IAM start year (historical)
         for i in range(self.justice_start_index):
             self._stepwise_run(i)
 
-        # Store initial temperature for t=0
         t_init = self.cummins_state_array[self.justice_start_index, 0, :, 1]
         n = self.ensemble_size
         self.t_at[0, :] = t_init[:n]
 
-        self._ecs_values = None  # computed lazily
+        self._ecs_values = None
 
     def _fill_fair_data(self, scenarios: list, ensemble_size: int):
-        """Load FAIR configs, species properties, and RCMIP emissions."""
         self.define_time(_FAIR_START_YEAR, self._iam_end_year + 1, 1)
         self.define_scenarios(scenarios)
 
@@ -262,7 +223,6 @@ class FAIRClimateModule(FAIR):
 
         self._fill_rcmip(scenarios)
 
-        # NOx GFED sectors sum
         df_emis = pd.read_csv(
             os.path.join(self._data_path, "rcmip_emissions_annual.csv")
         )
@@ -291,7 +251,6 @@ class FAIRClimateModule(FAIR):
                 ].interpolate(axis=1).values.squeeze()
             )[:self.emissions.shape[0], None]
 
-        # Climate configs
         fill(self.climate_configs["ocean_heat_capacity"],
              df_configs.loc[:, "clim_c1":"clim_c3"].values)
         fill(self.climate_configs["ocean_heat_transfer"],
@@ -315,7 +274,6 @@ class FAIRClimateModule(FAIR):
             )
         )
 
-        # Carbon cycle
         fill(self.species_configs["iirf_0"],
              df_configs["cc_r0"].values.squeeze(), specie="CO2")
         fill(self.species_configs["iirf_airborne"],
@@ -325,7 +283,6 @@ class FAIRClimateModule(FAIR):
         fill(self.species_configs["iirf_temperature"],
              df_configs["cc_rT"].values.squeeze(), specie="CO2")
 
-        # Aerosol indirect
         fill(self.species_configs["aci_scale"],
              df_configs["aci_beta"].values.squeeze())
         fill(self.species_configs["aci_shape"],
@@ -335,13 +292,11 @@ class FAIRClimateModule(FAIR):
         fill(self.species_configs["aci_shape"],
              df_configs["aci_shape_oc"].values.squeeze(), specie="OC")
 
-        # Aerosol direct
         for sp in ["BC", "CH4", "N2O", "NH3", "NOx", "OC", "Sulfur", "VOC",
                    "Equivalent effective stratospheric chlorine"]:
             fill(self.species_configs["erfari_radiative_efficiency"],
                  df_configs[f"ari_{sp}"], specie=sp)
 
-        # Forcing scaling
         for sp in ["CO2", "CH4", "N2O", "Stratospheric water vapour", "Contrails",
                    "Light absorbing particles on snow and ice", "Land use"]:
             fill(self.species_configs["forcing_scale"],
@@ -360,13 +315,11 @@ class FAIRClimateModule(FAIR):
             fill(self.species_configs["forcing_scale"],
                  df_configs["fscale_minorGHG"].values.squeeze(), specie=sp)
 
-        # Ozone
         for sp in ["CH4", "N2O", "Equivalent effective stratospheric chlorine",
                    "CO", "VOC", "NOx"]:
             fill(self.species_configs["ozone_radiative_efficiency"],
                  df_configs[f"o3_{sp}"], specie=sp)
 
-        # CO2 baseline concentration
         fill(self.species_configs["baseline_concentration"],
              df_configs["cc_co2_concentration_1750"].values.squeeze(), specie="CO2")
 
@@ -386,7 +339,6 @@ class FAIRClimateModule(FAIR):
                 self._make_ebms()
 
     def _fill_rcmip(self, scenarios: list):
-        """Fill emissions/concentrations/forcing from RCMIP CSV files."""
         species_to_rcmip = {sp: sp.replace("-", "") for sp in self.species}
         species_to_rcmip["CO2 FFI"] = "CO2|MAGICC Fossil and Industrial"
         species_to_rcmip["CO2 AFOLU"] = "CO2|MAGICC AFOLU"
@@ -483,7 +435,6 @@ class FAIRClimateModule(FAIR):
                     fill(self.forcing, forc[:, None], specie=specie, scenario=scenario)
 
     def _purge_emissions(self, scenarios: list):
-        """Zero out CO2 FFI emissions after the IAM start year (they will be set by the IAM)."""
         for scenario in scenarios:
             rcmip_arr = self.emissions.sel(specie="CO2 FFI", scenario=scenario)
             purge = np.full((self._iam_end_year - _FAIR_START_YEAR + 1, 1,
@@ -492,7 +443,6 @@ class FAIRClimateModule(FAIR):
             fill(self.emissions, purge, specie="CO2 FFI")
 
     def _cache_arrays(self):
-        """Extract xarray data to numpy for performance (adapted from JUSTICE)."""
         self.alpha_lifetime_array = self.alpha_lifetime.data
         self.airborne_emissions_array = self.airborne_emissions.data
         self.baseline_concentration_array = self.species_configs["baseline_concentration"].data
@@ -564,12 +514,7 @@ class FAIRClimateModule(FAIR):
         self.co2_ffi_idx = int(np.where(self._co2_ffi_indices)[0][0])
         self.co2_afolu_idx = int(np.where(self._co2_afolu_indices)[0][0])
 
-    # ------------------------------------------------------------------
-    # Step-by-step physics (adapted verbatim from JUSTICE CoupledFAIR)
-    # ------------------------------------------------------------------
-
     def _stepwise_run(self, i: int):
-        """Advance FAIR by one timestep. Adapted from JUSTICE CoupledFAIR.stepwise_run."""
         if self._routine_flags["ghg"]:
             self.alpha_lifetime_array[i:i+1, ..., self._ghg_indices] = calculate_alpha(
                 self.airborne_emissions_array[i:i+1, ..., self._ghg_indices],
@@ -747,30 +692,9 @@ class FAIRClimateModule(FAIR):
                 self.forcing_efficacy_sum_array[i+1:i+2, ..., None],
             )
 
-    # ------------------------------------------------------------------
-    # IAM interface
-    # ------------------------------------------------------------------
-
     def step(self, ti: int, global_emiss_gtco2: float, elapsed: float) -> tuple:
-        """
-        Advance the FAIR model by one year and return temperature and forcing.
-
-        Parameters
-        ----------
-        ti : int
-            IAM timestep index (0 = start_year).
-        global_emiss_gtco2 : float
-            Total global CO2 FFI emissions in GtCO2/yr.
-        elapsed : float
-            Years since start (unused by FAIR but kept for interface compat).
-
-        Returns
-        -------
-        (mean_surface_temp_C, total_forcing_W_m2)
-        """
         fair_t = ti + self.justice_start_index
 
-        # FAIR expects CO2 FFI in Gt CO2/yr — same units as glob_emiss
         emiss_gt = global_emiss_gtco2
         self.emissions_array[fair_t, 0, :, self.co2_ffi_idx] = emiss_gt
         self.emissions_array[fair_t, 0, :, self.co2_idx] = (
@@ -795,13 +719,11 @@ class FAIRClimateModule(FAIR):
         total_forcing = float(self.forcing_sum_array[fair_t+1, 0, :n].mean())
         self.forcing[ti] = total_forcing
 
-        # CO2 forcing (from GHG sum minus non-CO2 GHGs is complex; use total as approximation)
         self.f_co2[ti] = float(
             self.forcing_array[fair_t+1, 0, :n, self.co2_idx].mean()
         )
         self.f_ex[ti] = total_forcing - self.f_co2[ti]
 
-        # CO2 concentration (ppm) and atmospheric carbon (GtC)
         co2_ppm = float(
             self.concentration_array[fair_t+1, 0, :n, self.co2_idx].mean()
         )
@@ -837,15 +759,7 @@ class FAIRClimateModule(FAIR):
         return self._co2_ppm_out
 
 
-# ------------------------------------------------------------------
-# Download helper
-# ------------------------------------------------------------------
-
 def download_fair_data(dest_dir: str = None):
-    """
-    Download FAIR configuration files to dest_dir (default: backend/data/fair_input/).
-    Requires the 'pooch' package: pip install pooch
-    """
     try:
         import pooch
     except ImportError:
