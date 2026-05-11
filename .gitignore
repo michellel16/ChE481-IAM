@@ -1,4 +1,4 @@
-.claude/
+.temp/
 .idea/
 __pycache__/
 *.pyc
