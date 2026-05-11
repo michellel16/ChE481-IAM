@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from constants import BG, SIDEBAR, ACCENT, TAB_STYLE, TAB_SEL, INPUT_STYLE
+from constants import BG, SIDEBAR, ACCENT, TAB_STYLE, TAB_SEL, INPUT_STYLE, CLIMATE_INFO
 from components import label, label_with_input, section_head, divider
 from backend_client import SSP_OPTIONS, REGION_OPTIONS, ALL_REGION_INDICES
 
@@ -17,10 +17,10 @@ def build_layout():
                     "display": "flex", "alignItems": "center", "gap": "14px", "flexShrink": 0,
                 },
                 children=[
-                    html.Span("IAM insert some clever name here",
-                              style={"fontWeight": "800", "fontSize": "17px", "color": "white"}),
+                    html.Span("IAM dying",
+                              style={"fontWeight": "800", "fontSize": "22px", "color": "white"}),
                     html.Span("Simplified DICE/RICE Integrated Assessment Model",
-                              style={"color": "#7a9ab8", "fontSize": "12.5px", "marginLeft": "6px"}),
+                              style={"color": "#9fbcce", "fontSize": "15px", "marginLeft": "6px"}),
                     html.Div(style={"flex": 1}),
                 ],
             ),
@@ -33,7 +33,7 @@ def build_layout():
                 html.Div(
                     id="sidebar",
                     style={
-                        "width": "320px", "minWidth": "200px", "maxWidth": "520px",
+                        "width": "380px", "minWidth": "200px", "maxWidth": "560px",
                         "background": SIDEBAR,
                         "padding": "12px 14px 20px",
                         "overflowY": "auto", "overflowX": "hidden",
@@ -45,9 +45,16 @@ def build_layout():
                         section_head("Scenario"),
 
                         label("SSP Pathway"),
+                        html.Div(
+                            html.I("Projected global socioeconomic scenarios, sets development trajectory (population, GDP, technology, climate policy, etc.)"),
+                            style={"color": "#9fbcce", "fontSize": "12px",
+                                   "lineHeight": "1.45", "marginBottom": "10px"},
+                        ),
                         dcc.Dropdown(id="ssp", options=SSP_OPTIONS, value="SSP2",
                                      clearable=False, searchable=False, style={"fontSize": "13px"}),
+                        html.Div(id="ssp-info", className="info-box"),
 
+                        html.Div(style={"marginTop": "12px"}),
                         label("Simulation Years"),
                         html.Div(
                             style={"display": "flex", "gap": "6px", "alignItems": "center",
@@ -74,20 +81,37 @@ def build_layout():
                         divider(),
                         section_head("Climate", "#e9c46a"),
 
+                        label("Climate Model"),
+                        dcc.Dropdown(
+                            id="climate", clearable=False, searchable=False, value="dice",
+                            options=[
+                                {"label": "DICE 2-box (default)",  "value": "dice"},
+                                {"label": "FaIR v2 (full physics)",      "value": "fair"},
+                            ],
+                            style={"fontSize": "14px"},
+                        ),
+                        html.Div(id="climate-info", className="info-box"),
+
                         label("Damage Function"),
                         dcc.Dropdown(
                             id="damage", clearable=False, searchable=False, value="quadratic",
                             options=[
-                                {"label": "Quadratic (standard DICE)",     "value": "quadratic"},
-                                {"label": "Linear",                         "value": "linear"},
+                                {"label": "Quadratic (DICE standard)", "value": "quadratic"},
+                                {"label": "Linear", "value": "linear"},
                                 {"label": "Threshold (3 °C tipping point)", "value": "threshold"},
+                                {"label": "Kalkuhl (rate-of-change, 2019)", "value": "kalkuhl"},
                             ],
-                            style={"fontSize": "13px"},
+                            style={"fontSize": "14px"},
                         ),
                         html.Div(id="damage-info", className="info-box"),
 
                         label_with_input("Climate Ensemble Members", "ensemble-input",
                                          type="number", min=1, max=30, step=1, value=10),
+                        html.Div(
+                            html.I("Number of model runs with different ECS samples. More members give more reliable uncertainty band."),
+                            style={"color": "#9fbcce", "fontSize": "12px",
+                                   "lineHeight": "1.45", "marginBottom": "4px"},
+                        ),
                         html.Div(className="slider-wrap", children=[
                             dcc.Slider(
                                 id="ensemble", min=1, max=30, step=1, value=10,
@@ -95,16 +119,13 @@ def build_layout():
                                 tooltip={"placement": "bottom", "always_visible": False},
                             ),
                         ]),
-                        html.Div("More members gives wider uncertainty bands. Max 30.",
-                                 style={"color": "#7a9ab8", "fontSize": "10.5px",
-                                        "marginTop": "2px", "lineHeight": "1.4"}),
 
                         divider(),
                         section_head("Policy — Emission Control μ", "#e76f51"),
 
                         html.Div(
-                            "Fraction of emissions reduced by policy (0 = none, 1 = full)",
-                            style={"color": "#7a9ab8", "fontSize": "10.5px",
+                            html.I("Fraction of emissions reduced by policy (0 = none, 1 = full)"),
+                            style={"color": "#9fbcce", "fontSize": "12px",
                                    "lineHeight": "1.45", "marginBottom": "4px"},
                         ),
 
@@ -128,7 +149,7 @@ def build_layout():
                             ),
                         ]),
 
-                        html.Button("↺  Reset to SSP default", id="reset-cr",
+                        html.Button("↺  Reset to Default", id="reset-cr",
                                     n_clicks=0, className="reset-btn"),
 
                         divider(),
@@ -140,12 +161,12 @@ def build_layout():
                                 html.Button("All", id="regions-all", n_clicks=0,
                                     style={"background": "#1a3228", "border": "1px solid #2a5038",
                                            "color": "#90be6d", "padding": "3px 12px",
-                                           "borderRadius": "0", "fontSize": "11px",
+                                           "borderRadius": "0", "fontSize": "12px",
                                            "cursor": "pointer", "flex": 1}),
                                 html.Button("None", id="regions-none", n_clicks=0,
                                     style={"background": "#2a1e1e", "border": "1px solid #5a2828",
                                            "color": "#e76f51", "padding": "3px 12px",
-                                           "borderRadius": "0", "fontSize": "11px",
+                                           "borderRadius": "0", "fontSize": "12px",
                                            "cursor": "pointer", "flex": 1}),
                             ],
                         ),
@@ -153,8 +174,8 @@ def build_layout():
                             id="regions",
                             options=REGION_OPTIONS,
                             value=ALL_REGION_INDICES,
-                            labelStyle={"display": "block", "color": "#a0b8d0",
-                                        "fontSize": "12px", "marginBottom": "4px"},
+                            labelStyle={"display": "block", "color": "#b8cce0",
+                                        "fontSize": "13px", "marginBottom": "4px"},
                             inputStyle={"marginRight": "7px", "accentColor": "#90be6d"},
                         ),
 
@@ -165,11 +186,12 @@ def build_layout():
                         dcc.Dropdown(
                             id="welfare", clearable=False, searchable=False, value="utilitarian",
                             options=[
-                                {"label": "Utilitarian / Ramsey", "value": "utilitarian"},
-                                {"label": "Egalitarian (per-capita wt.)", "value": "egalitarian"},
-                                {"label": "Rawlsian (worst-off region)", "value": "rawlsian"},
+                                {"label": "Utilitarian (standard DICE)",        "value": "utilitarian"},
+                                {"label": "Prioritarian (rank-weighted)",        "value": "prioritarian"},
+                                {"label": "Sufficientarian (sufficiency floor)", "value": "sufficientarian"},
+                                {"label": "Egalitarian (Gini-weighted)",         "value": "egalitarian"},
                             ],
-                            style={"fontSize": "13px"},
+                            style={"fontSize": "14px"},
                         ),
                         html.Div(id="welfare-info", className="info-box"),
 
@@ -180,7 +202,7 @@ def build_layout():
                                 {"label": "Market / Neoclassical",    "value": "market"},
                                 {"label": "Optimal / Social Planner", "value": "optimal"},
                             ],
-                            style={"fontSize": "13px"},
+                            style={"fontSize": "14px"},
                         ),
                         html.Div(id="economy-info", className="info-box"),
 
@@ -215,6 +237,8 @@ def build_layout():
                                             style=TAB_STYLE, selected_style=TAB_SEL),
                                     dcc.Tab(label="CO₂ & Forcing", value="co2",
                                             style=TAB_STYLE, selected_style=TAB_SEL),
+                                    dcc.Tab(label="Welfare & Damages", value="welfare",
+                                            style=TAB_STYLE, selected_style=TAB_SEL),
                                     dcc.Tab(label="About",         value="about",
                                             style=TAB_STYLE, selected_style=TAB_SEL),
                                 ],
@@ -231,7 +255,7 @@ def build_layout():
                             children=html.Div(
                                 id="tab-content",
                                 style={"flex": 1, "overflowY": "auto",
-                                       "padding": "16px", "minHeight": 0},
+                                       "padding": "20px 90px", "minHeight": 0},
                             ),
                         ),
                     ],

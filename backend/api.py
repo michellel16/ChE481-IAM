@@ -55,6 +55,7 @@ def run():
     cr_end = float(body.get("cr_end",   0.65))
     welfare = body.get("welfare",  "utilitarian")
     economy = body.get("economy",  "market")
+    climate = body.get("climate",  "dice")
 
     if start >= end:
         return jsonify({"error": "start year must be before end year"}), 400
@@ -69,6 +70,7 @@ def run():
         cr_end_default = cr_end,
         welfare_type = welfare,
         economy_type = economy,
+        climate_type = climate,
     )
 
     payload = {
@@ -96,6 +98,17 @@ def run():
         "mac": _to_list(r["mac"]),
         "ssp": r["ssp"],
         "ssp_name": r["ssp_name"],
+        "welfare_type": r.get("welfare_type", welfare),
+        "damage_type":  r.get("damage_type",  damage),
+        "climate_type": r.get("climate_type", climate),
+        "welfare":               float(r["welfare"]),
+        "welfare_per_year":      _to_list(r["welfare_per_year"]),
+        "equity_equiv_consumption": _to_list(r["equity_equiv_consumption"]),
+        "regional_welfare":      _to_list(r["regional_welfare"]),
+        "gini_per_year":         _to_list(r["gini_per_year"]),
+        "regional_damage_frac":  _to_list(r["regional_damage_frac"]),
+        "consumption":           _to_list(r["consumption"]),
+        "population":            _to_list(r["population"]),
     }
 
     del r

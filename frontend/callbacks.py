@@ -3,13 +3,13 @@ import urllib.error
 import dash
 from dash import html, Input, Output, State, callback
 
-from constants import DAMAGE_INFO, WELFARE_INFO, ECONOMY_INFO
+from constants import DAMAGE_INFO, WELFARE_INFO, ECONOMY_INFO, CLIMATE_INFO, SSP_INFO
 from backend_client import (
     SSP_CONFIGS, ALL_REGION_INDICES, BACKEND_URL, _api_post,
 )
 from tabs import (
     placeholder, tab_emissions, tab_temperature,
-    tab_regional, tab_economics, tab_co2, tab_about,
+    tab_regional, tab_economics, tab_co2, tab_welfare, tab_about,
 )
 
 @callback(
@@ -107,14 +107,20 @@ def ensemble_slider_to_input(v):
 def toggle_regions(_, __):
     return ALL_REGION_INDICES if dash.ctx.triggered_id == "regions-all" else []
 
+@callback(Output("ssp-info",     "children"), Input("ssp",     "value"))
+def ssp_info(v):    return SSP_INFO.get(v, "")
+
 @callback(Output("damage-info",  "children"), Input("damage",  "value"))
-def damage_info(v):  return DAMAGE_INFO[v]
+def damage_info(v):  return DAMAGE_INFO.get(v, "")
 
 @callback(Output("welfare-info", "children"), Input("welfare", "value"))
-def welfare_info(v): return WELFARE_INFO[v]
+def welfare_info(v): return WELFARE_INFO.get(v, "")
 
 @callback(Output("economy-info", "children"), Input("economy", "value"))
-def economy_info(v): return ECONOMY_INFO[v]
+def economy_info(v): return ECONOMY_INFO.get(v, "")
+
+@callback(Output("climate-info", "children"), Input("climate", "value"))
+def climate_info(v): return CLIMATE_INFO.get(v, "")
 
 @callback(
     Output("run-store", "data"),
@@ -127,9 +133,10 @@ def economy_info(v): return ECONOMY_INFO[v]
     State("cr-end",   "value"),
     State("welfare",  "value"),
     State("economy",  "value"),
+    State("climate",  "value"),
     prevent_initial_call=False,
 )
-def run_model(_, ssp, damage, ensemble, years, cr_start, cr_end, welfare, economy):
+def run_model(_, ssp, damage, ensemble, years, cr_start, cr_end, welfare, economy, climate):
     start, end = years
     if start >= end:
         return {"error": "Start year must be before end year."}
@@ -144,6 +151,7 @@ def run_model(_, ssp, damage, ensemble, years, cr_start, cr_end, welfare, econom
             "cr_end":   float(cr_end),
             "welfare":  welfare,
             "economy":  economy,
+            "climate":  climate or "dice",
         })
     except urllib.error.URLError:
         return {"error": f"Backend unreachable at {BACKEND_URL}. Is it running?"}
@@ -157,6 +165,8 @@ def run_model(_, ssp, damage, ensemble, years, cr_start, cr_end, welfare, econom
     State("regions",   "value"),
 )
 def render_tab(tab, data, regions):
+    if tab == "about":
+        return tab_about()
     if not data:
         return placeholder()
     if "error" in data:
@@ -171,5 +181,6 @@ def render_tab(tab, data, regions):
         "regional":    lambda: tab_regional(data, yrs, sel),
         "economics":   lambda: tab_economics(data, yrs, sel),
         "co2":         lambda: tab_co2(data, yrs),
+        "welfare":     lambda: tab_welfare(data, yrs, sel),
     }
     return dispatch.get(tab, lambda: html.Div())()

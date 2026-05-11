@@ -4,7 +4,7 @@ import dash
 from layout import build_layout
 import callbacks  # noqa: F401 — registers all Dash callbacks
 
-app = dash.Dash(__name__, title="IAM insert some clever name here",
+app = dash.Dash(__name__, title="IAM dying",
                 assets_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets"),
                 prevent_initial_callbacks="initial_duplicate")
 

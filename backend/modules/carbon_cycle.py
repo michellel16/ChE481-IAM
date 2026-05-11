@@ -13,6 +13,7 @@ CMW_PER_CO2MW = 12.0 / 44.0 # MW ratio C:CO2
 class CarbonCycleModule:
     def __init__(self, params: dict, n_years: int):
         cp = params["carbon_cycle"]
+        # keep params ref for base_year lookup
 
         self.m_at_pre = cp["m_at_preindustrial"]
         self.m_up_pre = cp["m_up_preindustrial"]
@@ -35,10 +36,12 @@ class CarbonCycleModule:
         self.m_lo = np.zeros(n_years)
         self.co2_ppm = np.zeros(n_years)
 
-        # Initial conditions at 2015 start year
-        self.m_at[0] = cp["m_at_2015"]
-        self.m_up[0] = cp["m_up_2015"]
-        self.m_lo[0] = cp["m_lo_2015"]
+        # Initial conditions — prefer year-keyed values, fall back to 2015
+        base_year = params.get("base_year", 2015)
+        yr = str(base_year)
+        self.m_at[0] = cp.get(f"m_at_{yr}", cp.get("m_at_2015", 851.0))
+        self.m_up[0] = cp.get(f"m_up_{yr}", cp.get("m_up_2015", 1537.0))
+        self.m_lo[0] = cp.get(f"m_lo_{yr}", cp.get("m_lo_2015", 10012.0))
         self.co2_ppm[0] = self._to_ppm(self.m_at[0])
 
     # Carbon cycle per time step, atmospheric CO2 concentration and carbon stock

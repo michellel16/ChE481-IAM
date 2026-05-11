@@ -14,25 +14,29 @@ class EconomyModule:
     def __init__(self, params: dict, ssp_cfg: dict, n_years: int, economy_type: str = "market"):
         ic = params["initial_conditions"]
         ep = params["economy"]
+        neo = ep.get("neoclassical", ep)  # support nested or flat format
 
         self.economy_type = economy_type
-        self.rho_ramsey = 0.015 # Pure rate of time preference for Ramsey rule
+        self.rho_ramsey = 0.015
 
-        self.gamma = ep["capital_elasticity"] # Capital share
-        self.delta_k = ep["depreciation_rate"] # Annual depreciation rate
-        self.tfp_growth_0 = np.array(ep["tfp_growth_0"]) # Baseline TFP growth rate
+        self.gamma = neo.get("capital_elasticity", ep.get("capital_elasticity", 0.3))
+        self.delta_k = neo.get("depreciation_rate", ep.get("depreciation_rate", 0.10))
+        self.zeta = neo.get("elasticity_of_output_to_capital", 0.004)
+        self.elasmu = neo.get("elasmu", 1.45)
+        self.tfp_growth_0 = np.array(ep["tfp_growth_0"])
         self.tfp_halving = ep["tfp_halving_years"]
-        self.sigma_dec_0 = np.array(ep["sigma_decline_0"]) # Decarbonization
+        self.sigma_dec_0 = np.array(ep["sigma_decline_0"])
 
-        # SSP-specific - config
-        self.pop_max = np.array(ssp_cfg["pop_max"]) # Maximum population growth
+        # SSP-specific config
+        self.pop_max = np.array(ssp_cfg["pop_max"])
         self.pop_speed = ssp_cfg["pop_speed"]
-        self.tfp_mult = ssp_cfg["tfp_mult"] # Scale of TFP growth
-        self.sig_mult = ssp_cfg["sigma_mult"] # Scales of sigma decline
+        self.tfp_mult = ssp_cfg["tfp_mult"]
+        self.sig_mult = ssp_cfg["sigma_mult"]
 
-        # Initial GDP, population, savings rate
-        gdp_0 = np.array(ic["gdp_2015"])
-        pop_0 = np.array(ic["pop_2015"])
+        # Initial conditions — support both generic (gdp_0) and year-specific (gdp_2015/gdp_2025) keys
+        base_year = params.get("base_year", 2015)
+        gdp_0 = np.array(ic.get("gdp_0", ic.get(f"gdp_{base_year}", ic.get("gdp_2015"))))
+        pop_0 = np.array(ic.get("pop_0", ic.get(f"pop_{base_year}", ic.get("pop_2015"))))
         self.savings_rate = np.array(ic["savings_rate"])
 
         n = len(gdp_0)
@@ -48,9 +52,11 @@ class EconomyModule:
         self.consumption = np.zeros((n, n_years))
         self.gdp_per_capita = np.zeros((n, n_years))
 
+        sigma_0 = np.array(ic.get("sigma_0", ic.get(f"sigma_{base_year}", ic.get("sigma_2015"))))
+
         self.pop[:, 0] = pop_0
         self.K[:, 0] = gdp_0 * ic["capital_to_gdp_ratio"]
-        self.sigma[:, 0] = np.array(ic["sigma_2015"])
+        self.sigma[:, 0] = sigma_0
         self.tfp[:, 0] = gdp_0 / (self.K[:, 0] ** self.gamma * pop_0 ** (1.0 - self.gamma))
 
     # Determine population growth, carbon intensity, TFP growth, gross economic output for damage and abatement modules
@@ -74,15 +80,21 @@ class EconomyModule:
         # Net economic output
         self.y_net[:, t] = np.maximum(self.y_gross[:, t] * (1.0 - damage_frac) - self.y_gross[:, t] * abate_frac,0.0)
 
-        # Savings rate, depends on fixed market or Ramsey-rule (optimal) -> savings rate converges from market rates toward s_golden
+        # Savings rate: market uses fixed regional rates; optimal converges toward Ramsey golden-rule target.
+        # Full formula from JUSTICE/RICE50: s* = γ·(δk+ζ) / (δk + ζ·η + ρ)
         if self.economy_type == "optimal":
-            s_golden = self.gamma * self.delta_k / (self.delta_k + self.rho_ramsey)
+            s_golden = (self.gamma * (self.delta_k + self.zeta)
+                        / (self.delta_k + self.zeta * self.elasmu + self.rho_ramsey))
             alpha = np.exp(-float(t) / 40.0)
             savings = s_golden + (self.savings_rate - s_golden) * alpha
-        else: savings = self.savings_rate
+        else:
+            savings = self.savings_rate
 
         self.consumption[:, t] = (1.0 - savings) * self.y_net[:, t] # What's left after savings (damage and abatement)
         self.gdp_per_capita[:, t] = self.y_net[:, t] / self.pop[:, t]
 
-        # Capital accumulation
-        if t < self.n_years - 1: self.K[:, t+1] = ((1.0 - self.delta_k) * self.K[:, t] + savings * self.y_net[:, t])
+        # Capital accumulation (floor at zero: high abatement can't drive capital negative)
+        if t < self.n_years - 1:
+            self.K[:, t+1] = np.maximum(
+                (1.0 - self.delta_k) * self.K[:, t] + savings * self.y_net[:, t], 0.0
+            )
