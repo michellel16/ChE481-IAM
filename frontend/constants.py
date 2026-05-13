@@ -92,15 +92,15 @@ ECONOMY_INFO = {
 ABOUT_TEXT = [
     (
         "What is an Integrated Assessment Model (IAM)?",
-        """IAMs are tools for predicting emissions growth and temperature rise given a set of restrictions or projections. They are used by policymakers and the IPCC to evaluate mitigation and carbon removal strategies.
+        """IAMs are tools for predicting emissions growth and temperature rise given a set of restrictions or projections. They are used by policymakers and the IPCC to evaluate mitigation and carbon removal strategies [1].
 
-**DICE** (Dynamic Integrated Model of Climate and the Economy) is a globally aggregated model simplifying economics, politics, and factors like emissions and population. **RICE** (Regional Integrated Model of Climate and the Economy) operates similarly but across 12 regions (Africa, China, EU, Eurasia, India, Japan, Latin America, Middle East, Russia, US).
+**DICE** (Dynamic Integrated Model of Climate and the Economy) is a globally aggregated model simplifying economics, politics, and factors like emissions and population [2]. **RICE** (Regional Integrated Model of Climate and the Economy) operates similarly but across 12 regions (Africa, China, EU, Eurasia, India, Japan, Latin America, Middle East, Russia, US) [3].
 
 This website implements a simplified DICE/RICE model with a 5-year time-step from 2025 to 2100."""
     ),
     (
         "SSP Scenarios",
-        """**Shared Socioeconomic Pathways (SSPs)** are standardized global development scenarios describing possible futures for population, economic growth, land use, energy systems, and emissions.
+        """**Shared Socioeconomic Pathways (SSPs)** are standardized global development scenarios describing possible futures for population, economic growth, land use, energy systems, and emissions [4].
 
 The SSP sets the baseline emissions trajectory before any policy intervention, specifically how much emissions grow and how costly it is to achieve a given temperature target. Policymakers use SSPs to stress-test climate strategies against uncertainty in future development."""
     ),
@@ -137,5 +137,20 @@ significantly affecting the optimal carbon price and the recommended level of ab
 - **Uncertainty:** The climate ensemble shows a range of physically plausible outcomes, important for assessing tail risks.
 
 The significance behind IAM results are the tradeoffs between outcomes across scenarios, and how sensitive results are to assumptions about damages, policy, and development pathways, helping users understand how results can drive effective, ethical, and feasible policy."""
+    ),
+(
+        "Citations",
+        """
+        1. Whittaker, H., Egna, N. & O’Connor-Morberg, S. The role of Integrated Assessment Models in Carbon Removal Policy. Carbon Direct Available at: https://www.carbon-direct.com/insights/the-role-of-integrated-assessment-models-in-carbon-removal-policy.\n
+        2. Nordhaus, W. & Sztorc, P. DICE 2023: Introduction and User’s Manual Third Edition (2024). Available at: https://yale.app.box.com/s/whlqcr7gtzdm4nxnrfhvap2hlzebuvvm/file/1539632845931.\n
+        3. Kim, D., Park, W. & Jin, T. Evaluating global carbon neutrality commitments: An integrated assessment model approach to the 2°C target. Environmental Science & Policy 174, 104280 (2025).\n
+        4. Understanding shared socio-economic pathways (ssps). Understanding Shared Socio-economic Pathways (SSPs) – ClimateData.ca Available at: https://climatedata.ca/resource/understanding-shared-socio-economic-pathways-ssps/. 
+"""
+    ),
+(
+        "Acknowledgements",
+        """
+        I would like to acknowledge Professor Simson for her guidance and support throughout this project.
+"""
     ),
 ]
