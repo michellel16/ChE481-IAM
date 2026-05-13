@@ -90,6 +90,10 @@ ECONOMY_INFO = {
 }
 
 ABOUT_TEXT = [
+(
+        "Author",
+        """Michelle Liang, ChE418 Spring 2026"""
+    ),
     (
         "What is an Integrated Assessment Model (IAM)?",
         """IAMs are tools for predicting emissions growth and temperature rise given a set of restrictions or projections. They are used by policymakers and the IPCC to evaluate mitigation and carbon removal strategies [1].
