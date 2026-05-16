@@ -3,7 +3,7 @@ services:
     name: che481-iam
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python -m backend.modules.climate.fair_climate --download
     startCommand: gunicorn wsgi:server --bind "0.0.0.0:$PORT" --timeout 120 --workers 1
     envVars:
       - key: PYTHON_VERSION
